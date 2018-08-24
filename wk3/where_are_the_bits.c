@@ -15,7 +15,7 @@ struct _bit_fields {
 
 int main(void)
 {
-   struct _bit_fields x = {14, 254, 0};
+   struct _bit_fields x = {14, 0, 0};
    //printf("%u\n",sizeof(x));      
    
    unsigned int  *pointer = (unsigned int *) &x;   

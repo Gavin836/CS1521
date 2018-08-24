@@ -168,6 +168,24 @@ char *showBits(Word val, char *buf)
    
    //printf("%d", val);
    return buf;
+   
+   
+  /* 
+  u int mask = 1 << 31;
+  
+  Word val -< this contain the bits
+  
+  within a for loop
+  int i = 0; i < 34; i++
+    if ((mask & val) > 0) {
+        buf[i] = '1'  
+      }
+      else {
+        buf[i] = '0'
+      }
+  
+  */
+   
 }
 
 // checks command-line args
