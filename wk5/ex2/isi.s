@@ -148,6 +148,18 @@ is_ident:
    # add extra code here to save them on the stack
 
 # ... your code for the body of is_ident(m,N) goes here ...
+   li $s0, 1
+   li $s1, 4
+   li $v0, 1
+
+while_rows:
+    ble $s0, $a1, while_cols
+    j while_i
+
+while_cols:
+   mul $t1, $s0, s4
+   lw $s3, ($t1)
+   beqz $s3, 
 
 # epilogue
    # if you saved more than four $s? registers
