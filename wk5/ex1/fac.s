@@ -76,7 +76,7 @@ fac:
 # ... TODO ... 
 
     li $t0, 1
-    move $a0, $s0
+    move $s0, $a0
     bgt $a0, $t0, else_1
     li $v0, 1
     j end_loop    
@@ -84,7 +84,8 @@ fac:
 else_1:
     addi $a0, $a0, -1
     j fac
-    mul $v0, $s0, $a0 
+    mul $t0, $s0, $a0
+    move $v0, $t0 
 
     
     
@@ -98,5 +99,4 @@ end_loop:
    la    $sp, 4($fp)        # restore $sp (remove stack frame)
    lw    $fp, ($fp)          # restore $fp (remove stack frame)
 
-   li    $v0, 0
    jr    $ra                # return tmp;
