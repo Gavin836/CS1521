@@ -74,19 +74,21 @@ fac:
    
    # code for recursive fac()
 # ... TODO ... 
+    move $s0, $a0
 
     li $t0, 1
-    move $s0, $a0
     bgt $a0, $t0, else_1
     li $v0, 1
     j end_loop    
      
 else_1:
-    addi $a0, $a0, -1
+    addi $a0, $s0, -1
     j fac
-    mul $t0, $s0, $a0
+    
+    mul $t0, $s0, $v0
     move $v0, $t0 
-
+    
+    j end_loop
     
     
 end_loop:
