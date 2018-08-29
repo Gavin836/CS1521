@@ -83,7 +83,7 @@ fac:
      
 else_1:
     addi $a0, $s0, -1
-    j fac
+    jal fac
     
     mul $t0, $s0, $v0
     move $v0, $t0 
