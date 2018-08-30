@@ -252,7 +252,7 @@ main_theLength_lt_1:
 main_theLength_ge_1:
 
 	# ... TODO ...
-# initialise the display to all spaces
+
 	# return 0
 	move	$v0, $zero
 main__post:
@@ -461,42 +461,6 @@ isUpper:
 # Code:
 	# set up stack frame
 	# ... TODO ...
-# set up stack frame
-	sw	$fp, -4($sp)
-	la	$fp, -4($sp)
-	sw	$ra, -4($fp)
-	la	$sp, -8($fp)
-
-	# if (ch >= 'A')
-	li	$v0, 'A'
-	blt	$a0, $v0, isUpper_ch_lt_a
-	nop	# in delay slot
-isUpper_ch_ge_a:
-	# if (ch <= 'Z')
-	li	$v0, 'Z'
-	bgt	$a0, $v0, isUpper_ch_gt_z
-	nop	# in delay slot
-isUpper_ch_le_z:
-	addi	$v0, $zero, 1
-	j	isUpper_ch_phi
-	nop	# in delay slot
-
-	# ... else
-isUpper_ch_lt_a:
-isUpper_ch_gt_z:
-	move	$v0, $zero
-	# fallthrough
-isUpper_ch_phi:
-
-isUpper__post:
-	# tear down stack frame
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-
-
-
-
 	# tear down stack frame
 	jr	$ra
 	nop	# in delay slot
