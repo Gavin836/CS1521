@@ -219,6 +219,7 @@ main_PTRs_f:
 	lw	$t0, ($t0)
 	blt	$s0, $t0, main_theLength_lt_MAXCHARS
 	nop	# in delay slot
+
 main_theLength_ge_MAXCHARS:
 	# printf(..., ..., ...)
 	la	$a0, main__2
@@ -240,6 +241,7 @@ main_theLength_lt_MAXCHARS:
 	li	$t0, 1
 	bge	$s0, $t0, main_theLength_ge_1
 	nop	# in delay slot
+
 main_theLength_lt_1:
 	# printf(...)
 	la	$a0, main__4
@@ -251,10 +253,173 @@ main_theLength_lt_1:
 	nop	# in delay slot
 main_theLength_ge_1:
 
-	# ... TODO ...
+######################################################################
 
-	# return 0
-	move	$v0, $zero
+
+
+
+	# ... TODO ...
+# initialise the display to all spaces
+	li $t0, 0 #Row counter
+	lw $t3, NROWS
+	lw $t4, NDCOLS
+	la $t5, display
+	li $t7, ' '
+
+main_init_spaces_row:
+	bge $t0, $t3, main_init_spaces_rowend
+	nop
+	li $t1, 0 #Column counter
+
+main_init_spaces_col:
+	bge $t1, $t4, main_init_spaces_colend
+	nop
+	#Find the correct index display[t0][t1] = t0*NDCOLS + t1 %%
+	mul $t6, $t0, $t4
+	add $t6, $t6, $t1
+	
+	#Set index to ' '
+	sb  $t7, display($t6)
+
+
+main_init_spaces_skip:
+	#increment col index
+	addi $t1, $t1, 1
+	j main_init_spaces_col
+	nop
+
+main_init_spaces_colend:
+	addi $t0, $t0, 1
+	j main_init_spaces_row
+	nop
+
+main_init_spaces_rowend:
+
+#####################################################################
+	
+	li $t0, 0 #i counter
+	li $t1, 0 #Row
+	li $t2, 0 #Col
+	li $t3, ' '
+	li $t4, 0 #theString[i]
+	la $t5, bigString
+	li $t6, 0 #bigstring index
+	lw $t7, CHRSIZE
+
+main_create_big:
+	li $t1, 0 #reset
+	bge $t0, $s0, main_create_bigend
+	nop
+	
+	#Get letter at index %%
+	add $t4, $s0, $t0
+	lb $t4, ($t4)
+
+	#Determine which hash matrix to store
+	#if space
+	beq $t4, $t3, main_create_spaces
+	nop
+	
+	#if uppercase
+	move $a0, $t4
+	jal isUpper
+	nop
+	bne $v0, $zero, main_create_upper
+	nop
+
+	#if lowercase
+	jal isLower
+	nop
+	bne $v0, $zero, main_create_lower
+	nop
+
+main_create_upper:
+	#which letter, and it's position in matrix
+
+	addi $t4, $t4, -'A'
+	j main_create_letter
+
+main_create_letter:
+	bge $t1, $t7, main_create_letter_end
+	
+
+main_create_letter_end:
+	
+
+
+main_create_letter:
+	lw $t3, CHRSIZE
+	mul $t3, $t3, $t3
+	mul $t4, $t4, $t3
+
+	#[Row][Column] = row*row_size + column
+	lb $t3, CHRSIZE
+	mul $t3, $t3, $t1
+	add $t3, $t3, $t2
+
+	#Access character at the index %%
+	add $t4, $t3, $t4
+	la $t3, all_chars
+	add $t4, $t4, $t3
+	lb $t4, ($t4)
+	
+	#Calculate position to store character
+	add $t3, $t7, 1
+	mul $t3, $t3, $t0
+	add $t3, $t3, $t2
+
+	li $t6 1000
+	mul $t6, $t6, $t2
+
+	add $t6, $t6, $t3
+	add $t6, $t6, $t5
+	sb $t4, ($t6)
+
+
+
+	#Enter it into display matrix
+main_create_spaces:
+	bge $t1, $t7, main_create_gen_end
+	nop
+	li $t2, 0 #reset col
+
+main_create_spaces_loop:
+	bge $t2, $t7, main_create_spaces_loopend
+	nop
+
+	#Calculate offset
+	#Find [row] = max_chars*(CHRSIZE+1) = 1000 %%
+	li $t4 = 1000
+
+	#[col + i * (CHRSIZE+1)]
+	mul $t6, $t6, $t0
+	add $t6, $t6, $t2
+
+	add $t4, $t4, $t6
+
+	#Set the index position to space
+	add $t4, $t4, $t5
+	sb $t3, ($t4)
+
+
+main_create_spaces_skip:
+	addi $t2, $t2, 1
+	j main_create_big_space_loop
+	nop
+
+main_create_spaces_loopend:
+	addi $t1, $t1, 1
+	j main_create_spaces
+	nop
+
+main_create_big_gen_end:
+	addi $t0, $t0, 1
+	j main_create_big
+
+main_create_bigend:
+
+#####################################################################
+
 main__post:
 	# tear down stack frame
 	lw	$s2, -16($fp)
@@ -461,6 +626,42 @@ isUpper:
 # Code:
 	# set up stack frame
 	# ... TODO ...
+# set up stack frame
+	sw	$fp, -4($sp)
+	la	$fp, -4($sp)
+	sw	$ra, -4($fp)
+	la	$sp, -8($fp)
+
+	# if (ch >= 'A')
+	li	$v0, 'A'
+	blt	$a0, $v0, isUpper_ch_lt_a
+	nop	# in delay slot
+isUpper_ch_ge_a:
+	# if (ch <= 'Z')
+	li	$v0, 'Z'
+	bgt	$a0, $v0, isUpper_ch_gt_z
+	nop	# in delay slot
+isUpper_ch_le_z:
+	addi	$v0, $zero, 1
+	j	isUpper_ch_phi
+	nop	# in delay slot
+
+	# ... else
+isUpper_ch_lt_a:
+isUpper_ch_gt_z:
+	move	$v0, $zero
+	# fallthrough
+isUpper_ch_phi:
+
+isUpper__post:
+	# tear down stack frame
+	lw	$ra, -4($fp)
+	la	$sp, 4($fp)
+	lw	$fp, ($fp)
+
+
+
+
 	# tear down stack frame
 	jr	$ra
 	nop	# in delay slot
@@ -500,11 +701,13 @@ isLower:
 	li	$v0, 'a'
 	blt	$a0, $v0, isLower_ch_lt_a
 	nop	# in delay slot
+
 isLower_ch_ge_a:
 	# if (ch <= 'z')
 	li	$v0, 'z'
 	bgt	$a0, $v0, isLower_ch_gt_z
 	nop	# in delay slot
+
 isLower_ch_le_z:
 	addi	$v0, $zero, 1
 	j	isLower_ch_phi
@@ -512,8 +715,15 @@ isLower_ch_le_z:
 
 	# ... else
 isLower_ch_lt_a:
+	li $v0, 0
+	j isLower__post
+	nop
+
 isLower_ch_gt_z:
 	move	$v0, $zero
+	j isLower__post
+	nop
+
 	# fallthrough
 isLower_ch_phi:
 
