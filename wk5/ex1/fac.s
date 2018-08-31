@@ -67,8 +67,8 @@ fac:
 # ... TODO ...
     sw $fp, -4($sp)
     la $fp, -4($sp)
-    sw $ra, -4($sp)
-    sw $s0, -8($sp)
+    sw $ra, -4($fp)
+    sw $s0, -8($fp)
     addi $sp, $sp, -12
     
    

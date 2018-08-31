@@ -150,25 +150,25 @@ is_ident:
 # ... your code for the body of is_ident(m,N) goes here ...
 
 
-   li    $s0, 0                     # initialise $s0 to be row = 0
-   li    $s1, 0                     # initialise $s1 to be column = 0
+   li    $s0, 0                  # initialise $s0 to be row = 0
+   li    $s1, 0                  # initialise $s1 to be column = 0
 
 while:
    lw    $t0, ($a0)
-   beq   $s0, $s1, check_first      # if (row == col) then check_first
+   beq   $s0, $s1, check_first     # if (row == col) then check_first
 
 check_second:                       # if (m[row][col] != 0) return 0;
    beq   $t0, $0, column_while_end
    j     not_ident_matrix
 
-check_first:                        # if (m[row][col] != 1) return 0;
+check_first:                       # if (m[row][col] != 1) return 0;
    li    $t1, 1
    beq   $t1, $t0, column_while_end
    j     not_ident_matrix
    
 
 column_while_end:
-   addi  $a0, 4                     # increment pointer
+   addi  $a0, 4                  # increment pointer
 
    addi  $s1, $s1, 1             # increment col
    bge   $s1, $a1, row_while_end  # (col >= n) then increment row
@@ -205,4 +205,22 @@ exit:
    addi $sp, $sp, 4
    lw   $fp, ($sp)
    addi $sp, $sp, 4
-   j    $ra
+   j    $ra# COMP1521 18s1 Exam Q1
+# Matrix data
+
+   .data
+N:
+   .word   9
+m:
+   .word   1, 0, 0, 0, 0, 0, 0, 0, 0
+   .word   0, 1, 0, 0, 0, 0, 0, 0, 0
+   .word   0, 0, 1, 0, 0, 0, 0, 0, 0
+   .word   0, 0, 0, 1, 0, 0, 0, 0, 0
+   .word   0, 0, 0, 0, 1, 0, 0, 0, 0
+   .word   0, 0, 0, 0, 0, 1, 0, 0, 0
+   .word   0, 0, 0, 0, 0, 0, 1, 0, 0
+   .word   0, 0, 0, 0, 0, 0, 0, 1, 0
+   .word   0, 0, 0, 0, 0, 0, 0, 0, 1
+
+   .align  2
+
