@@ -255,35 +255,38 @@ main_theLength_ge_1:
 
 ######################################################################
 
-
-
-
 	# ... TODO ...
 # initialise the display to all spaces
-	li $t0, 0 #Row counter
-	lw $t3, NROWS
-	lw $t4, NDCOLS
-	la $t5, display
+
+# Common registers:
+#			- t0: Row Counter
+#			- t1: Column Counter
+#			- t6: Display address
+#			- t7: Space character
+
+	li $t0, 0                             
+	la $t6, display
 	li $t7, ' '
 
 main_init_spaces_row:
+	lw $t3, NROWS
 	bge $t0, $t3, main_init_spaces_rowend
 	nop
-	li $t1, 0 #Column counter
+	li $t1, 0                      
 
 main_init_spaces_col:
+	lw $t4, NDCOLS
 	bge $t1, $t4, main_init_spaces_colend
 	nop
-	#Find the correct index display[t0][t1] = t0*NDCOLS + t1 %%
-	mul $t6, $t0, $t4
-	add $t6, $t6, $t1
-	
-	#Set index to ' '
-	sb  $t7, display($t6)
 
+	#Find the correct index display[t0][t1] = t0*NDCOLS + t1
+	mul $t2, $t0, $t4
+	add $t2, $t2, $t1
+	addu $t2, $t2, $t6
+	
+	sb  $t7, ($t2)
 
 main_init_spaces_skip:
-	#increment col index
 	addi $t1, $t1, 1
 	j main_init_spaces_col
 	nop
@@ -296,27 +299,37 @@ main_init_spaces_colend:
 main_init_spaces_rowend:
 
 #####################################################################
-	
-	li $t0, 0 #i counter
-	li $t1, 0 #Row
-	li $t2, 0 #Col
-	li $t3, ' '
-	li $t4, 0 #theString[i]
+#Bigchars array
+
+# Common Registers:
+#					-t0: i counter
+#					-t1: row 
+#					-t2: col
+#					-t4: string[i]
+#					-t5: Big string address
+#					-t7: CHRSIZE
+
+	li $t0, 0                        
 	la $t5, bigString
-	li $t6, 0 #bigstring index
 	lw $t7, CHRSIZE
 
 main_create_big:
-	li $t1, 0 #reset
+	li $t1, 0
+	li $t2, 0
 	bge $t0, $s0, main_create_bigend
 	nop
 	
-	#Get letter at index %%
-	add $t4, $s0, $t0
+	#Get letter at index
+	lw $t3, bigString
+	addu $t4, $t3, $t0
 	lb $t4, ($t4)
+
+	#Store a byte at an address
+	#sb $char, $address
 
 	#Determine which hash matrix to store
 	#if space
+	li $t3, ' '
 	beq $t4, $t3, main_create_spaces
 	nop
 	
@@ -345,7 +358,7 @@ main_create_letter:
 
 main_create_letter_end:
 	
-
+	
 
 main_create_letter:
 	lw $t3, CHRSIZE
@@ -353,29 +366,33 @@ main_create_letter:
 	mul $t4, $t4, $t3
 
 	#[Row][Column] = row*row_size + column
-	lb $t3, CHRSIZE
+	lw $t3, CHRSIZE
 	mul $t3, $t3, $t1
 	add $t3, $t3, $t2
 
 	#Access character at the index %%
 	add $t4, $t3, $t4
 	la $t3, all_chars
-	add $t4, $t4, $t3
+	addu $t4, $t4, $t3
 	lb $t4, ($t4)
 	
 	#Calculate position to store character
+	#Row index: rowlength * row_no
+	lw $t3, CHRSIZE
+	addi $t3, $t3, 1
+	lw $t6, MAXCHARS
+	mul $t6, $t6, $t3
+	mul $t6, $t6, $t1
+
 	add $t3, $t7, 1
 	mul $t3, $t3, $t0
-	add $t3, $t3, $t2
+	add $t3, $t3, $t2 
 
-	li $t6 1000
-	mul $t6, $t6, $t2
+	add $t3, $t3, $t6
 
 	add $t6, $t6, $t3
-	add $t6, $t6, $t5
+	addu $t6, $t6, $t5
 	sb $t4, ($t6)
-
-
 
 	#Enter it into display matrix
 main_create_spaces:
@@ -389,9 +406,14 @@ main_create_spaces_loop:
 
 	#Calculate offset
 	#Find [row] = max_chars*(CHRSIZE+1) = 1000 %%
-	li $t4 = 1000
+	li $t4, 1
+	add $t4, $t7, $t4
+	lw $t6, MAXCHARS
+	mul $t4, $t4, $t6
 
-	#[col + i * (CHRSIZE+1)]
+	#[col + i * (CHRSIZE+1)], ie add column offset
+	li $t6, 1
+	add $t6, $t6, $t7
 	mul $t6, $t6, $t0
 	add $t6, $t6, $t2
 
@@ -419,6 +441,36 @@ main_create_big_gen_end:
 main_create_bigend:
 
 #####################################################################
+#INTERATIONS
+
+li $t0, 0
+lw $t7, NDCOLS
+lw $t6, $a0  #%%
+add $t7, $t7, $t6
+lw $t6, NDCOLS
+addi $t6, $t6, -1
+
+
+main_interations_start:
+	bge $t0, $t7, main_interations_end
+	nop
+	move $a0, $t6
+	move $a1, $s1
+	jal setUpDisplay	
+	nop
+	jal showDisplay
+	nop
+	addi $t6, -1
+	li $a0, 1
+	jal delay
+	nop
+
+	j main_interations_start
+	nop
+
+main_interations_end:
+
+	li v0, 0
 
 main__post:
 	# tear down stack frame
@@ -436,21 +488,26 @@ main__post:
 	.text
 setUpDisplay:
 
-# Frame:	$fp, $ra, ...
-# Uses:		$a0, $a1, ...
+# Frame:	$fp, $ra, $s0, $s1, $s2, $s3
+# Uses:		$a0, $a1, $s0, $s1, $s2, $s3
 # Clobbers:	...
 
 # Locals:
-#	- `row' in $...
-#	- `out_col' in $...
-#	- `in_col' in $...
-#	- `first_col' in $...
-#	- ...
+#	- `row' in $s0
+#	- `out_col' in $s1
+#	- `in_col' in $s2
+#	- `first_col' in $s3
+#	- 'starting' in $a0
+#	- 'length' in $a1
 
 # Structure:
 #	setUpDisplay
 #	-> [prologue]
-#	-> ...
+#	-> starting_condition1
+#	-> starting_condition2
+#	-> display_copy_main
+#   -> display_copy_main_break
+#	-> display_copy_mainend
 #	-> [epilogue]
 
 # Code:
@@ -458,11 +515,96 @@ setUpDisplay:
 	sw	$fp, -4($sp)
 	la	$fp, -4($sp)
 	sw	$ra, -4($fp)
-	la	$sp, -8($fp)
+	sw 	$s0, -8($fp)
+	sw 	$s1, -12($fp)
+	sw 	$s2, -16($fp)
+	sw 	$s3, -20($fp)
+	la	$sp, -24($fp)
 
 	# ... TODO ...
+	# If starting < 0
+	li $s1, 0
+
+	bge $a0, $zero, setUpDisplay_else
+	li $s1, 0
+	lw $s3, $a0
+	li $t0, -1
+	mul $s3, $s3, $t1
+
+setUpDisplay_else:
+	bge $s1, $a1, setUpDisplay_space_else_end
+	li $s0, 0
+
+setUpDisplay_space_row_loop:
+	lw $t0, NROWS
+	bge $s0, $t0, setUpDisplay_space_row_loop_end
+
+	#Calculate the offset display[row][col] = ROWS * NROWS + OUTCOLS 
+	mul $t0, $t0, $s0
+	add $t0, $t0, $s1
+	la $t1, display
+
+	add $t0, $t0, $t1
+	li $t1, ' '
+	sb $t1, ($t0)
+
+setUpDisplay_space_row_loop_step:
+	addi $s0, 1
+	j setUpDisplay_space_row_loop
+
+setUpDisplay_space_row_loop_end:
+	addi $s1, 1
+	j setUpDisplay_else
+
+setUpDisplay_space_else_end:
+	li $s3, 0
+
+#Copy bigString into display
+setUpDisplay_bigstring: 
+	move $s2, $s3
+	bge $s2, $a1, setUpDisplay_bigstring_end
+	
+	lw $t1, NDCOLS
+	bge $s1, $t1, setUpDisplay_bigstring_end
+	li $s0, 0
+
+setUpDisplay_bigstring_row:
+	lw $t0, NROWS 
+	bge $s0, $t0, setUpDisplay_bigstring_row_end
+
+#Calculate offset in bigString = row*NSCOLS + in_col
+	lw $t0, NSCOLS
+	la $t1, bigString
+	mul $t7, $t0, $s0
+	add $t7, $t7, $s2
+	add $t7, $t7, $t1
+	lb $t7, ($t7)
+
+#Calculate offset in display = row*NDCOLS + out_col
+	lw $t0, NDCOLS
+	la $t1, display
+	mul $t6, $t0, $s0
+	add $t6, $t6, $s1
+	add $t6, $t6, $t1
+	sb $t7, ($t6)
+
+setUpDisplay_bigstring_row_step:
+	addi $s0, $s0, 1
+	j setUpDisplay_bigstring_row
+
+setUpDisplay_bigstring_row_end:
+	addi $s1, $s1, 1
+	addi $s2, $s2, 1
+
+	j setUpDisplay_bigstring
+
+setUpDisplay_bigstring_end:
 
 	# tear down stack frame
+	lw  $s3, -20($fp)
+	lw	$s2, -16($fp)
+	lw	$s1, -12($fp)
+	lw	$s0, -8($fp)
 	lw	$ra, -4($fp)
 	la	$sp, 4($fp)
 	lw	$fp, ($fp)
@@ -474,19 +616,23 @@ setUpDisplay:
 	.text
 showDisplay:
 
-# Frame:	$fp, $ra, ...
-# Uses:		...
+# Frame:	$fp, $ra, $s0, $s1, $s2
+# Uses:		$s0, $s1, $s2
 # Clobbers:	...
 
 # Locals:
-#	- `i' in $...
-#	- `j' in $...
-#	- ...
+#	- `i' in $s0
+#	- `j' in $s1
+#	- 'row' in $s2
 
 # Structure:
 #	showDisplay
 #	-> [prologue]
-#	-> ...
+#	-> showDisplay_rows
+#		-> showDisplay_cols
+#		-> showDisplay_cols_end
+#		-> showDisplay_cols_step
+#	-> showDIsplay_rows_end
 #	-> [epilogue]
 
 # Code:
@@ -494,11 +640,53 @@ showDisplay:
 	sw	$fp, -4($sp)
 	la	$fp, -4($sp)
 	sw	$ra, -4($fp)
-	la	$sp, -8($fp)
+	sw 	$s0, -8($fp)
+	sw 	$s1, -12($fp)
+	sw 	$s2, -16($fp)
+	la	$sp, -20($fp)  #%%
 
-	# ... TODO ...
+	la	$a0, CLEAR
+	li	$v0, 4 
+	syscall
 
-	# tear down stack frame
+	li $s0, 1
+showDisplay_rows: #%%
+	li $t1, NROWS
+	bge $s0, $t1, showDisplay_rows_end
+	li $s1, 0
+
+showDisplay_cols:
+	li $t0, NDCOLS
+	bge $s1, $t1, showDisplay_cols
+
+	#calculate offset display[i][j] = i * NDCOLS + j
+	mul $t0, $t0, $s0
+	add $t0, $t0, $s1
+	lw $t1, display
+	add $t0, $t1, $t0
+	lw $a0, ($t0)
+	li $v0, 11
+	syscall
+
+showDisplay_cols_step:
+	addi $s1, $s1, 1
+	j showDisplay_rows
+	nop
+
+showDisplay_cols_end:
+	addi $s0, $s0, 1
+	li $a0, '\n'
+	li $v0, 4
+	syscall
+
+	j showDisplay_rows
+	nop
+
+showDisplay_rows_end:
+	# tear down stack frame %%
+	lw	$s2, -16($fp)
+	lw	$s1, -12($fp)
+	lw	$s0, -8($fp)
 	lw	$ra, -4($fp)
 	la	$sp, 4($fp)
 	lw	$fp, ($fp)
@@ -650,6 +838,7 @@ isUpper_ch_le_z:
 isUpper_ch_lt_a:
 isUpper_ch_gt_z:
 	move	$v0, $zero
+	j isUpper__post
 	# fallthrough
 isUpper_ch_phi:
 
