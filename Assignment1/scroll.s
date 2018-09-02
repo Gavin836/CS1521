@@ -325,7 +325,7 @@ main_create_big:
 	#Determine which hash matrix to store
 		#if space
 	li $t2, ' '
-	beq $s3, $t2, main_create_spaces
+	beq $s3, $t2, main_create_big_spaces
 	nop
 	
 		#if uppercase
@@ -358,11 +358,11 @@ main_create_letter:
 main_create_letter_loop:
 	bge $s5, $t3, main_create_letter_loop_end
 
-	#Calculate offset in bigString = row * NDSCOL + col + i * (CHRSIZE+1)
+	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
 	addi $t3, $t3, 1
 	mul $t3, $t3, $t0
 	add $t3, $t3, $s5
-	lw $t4, NDSCOL
+	lw $t4, NSCOLS
 	mul $t4, $t4, $s4
 	add $t3, $t3, $t4
 	la $t4, bigString
@@ -401,11 +401,11 @@ main_create_big_spaces_loop:
 	bge $s5, $t2, main_create_big_spaces_loopend
 	nop
 
-	#Calculate offset in bigString = row * NDSCOL + col + i * (CHRSIZE+1)
+	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
 	addi $t2, $t2, 1
 	mul $t2, $t2, $t0
 	add $t2, $t2, $s5
-	lw $t3, NDSCOL
+	lw $t3, NSCOLS
 	mul $t3, $t3, $s4
 	add $t2, $t2, $t3
 
@@ -415,11 +415,11 @@ main_create_big_spaces_loop:
 
 main_create_big_spaces_step:
 	addi $s5, $s5, 1
-	j main_create_big_space_loop
+	j main_create_big_spaces_loop
 	nop
 
 main_create_big_spaces_loopend:
-	addi $s4, $ts4, 1
+	addi $s4, $t4, 1
 	j main_create_big_spaces
 	nop
 
@@ -434,8 +434,8 @@ main_create_gen_end:
 main_create_gen_end_loop:
 	bge $s4, $t7, main_create_gen_end_loop_end
 
-	# Calculate offset of bigString = row * NDSCOLS + col
-	lw $t2, NDSCOLS
+	# Calculate offset of bigString = row * NSCOLS + col
+	lw $t2, NSCOLS
 	mul $t2, $t2, $s4
 	add $t2, $t2, $s5
 	la $t3, bigString
@@ -458,7 +458,7 @@ main_create_bigend:
 #					- $t2: iterations
 #					- $t3: starting_col
 
-	lw $t7, NDCOLS
+	lw $t7, NSCOLS
 	add $t2, $s1, $t7
 	sub $t3, $t7, 1
 
@@ -486,12 +486,15 @@ main_interations_start:
 
 main_interations_end:
 
-	li v0, 0
+    move $v0, $0
 
 ########################################################################
 
 main__post:
 	# tear down stack frame
+	lw  $s5, -20($fp)
+	lw  $s4, -24($fp)
+	lw  $s3, -20($fp)
 	lw	$s2, -16($fp)
 	lw	$s1, -12($fp)
 	lw	$s0, -8($fp)
@@ -544,7 +547,7 @@ setUpDisplay:
 
 	bge $a0, $zero, setUpDisplay_else
 	li $s1, 0
-	lw $s3, $a0
+	lw $s3, ($a0)
 	li $t0, -1
 	mul $s3, $s3, $t1
 
@@ -668,12 +671,12 @@ showDisplay:
 
 	li $s0, 1
 showDisplay_rows: #%%
-	li $t1, NROWS
+	lw $t1, NROWS
 	bge $s0, $t1, showDisplay_rows_end
 	li $s1, 0
 
 showDisplay_cols:
-	li $t0, NDCOLS
+	lw $t0, NDCOLS
 	bge $s1, $t1, showDisplay_cols
 
 	#calculate offset display[i][j] = i * NDCOLS + j
