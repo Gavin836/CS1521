@@ -114,7 +114,11 @@ main:
 	sw	$s0, -8($fp)
 	sw	$s1, -12($fp)
 	sw	$s2, -16($fp)
-	addi	$sp, $sp, -20
+	sw  $s3, -20($fp)
+	sw  $s4, -24($fp)
+	sw  $s5, -28($fp)
+
+	addi	$sp, $sp, -32
 
 	# if (argc < 2)
 	li	$t0, 2
@@ -259,218 +263,232 @@ main_theLength_ge_1:
 # initialise the display to all spaces
 
 # Common registers:
-#			- t0: Row Counter
-#			- t1: Column Counter
-#			- t6: Display address
-#			- t7: Space character
+#			- s4: rows
+#			- s5: cols
 
-	li $t0, 0                             
-	la $t6, display
-	li $t7, ' '
+li $s4, 0            
 
 main_init_spaces_row:
-	lw $t3, NROWS
-	bge $t0, $t3, main_init_spaces_rowend
+	lw $t1, NROWS
+	bge $s4, $t1, main_init_spaces_row_end
 	nop
-	li $t1, 0                      
+	li $s5, 0                      
 
 main_init_spaces_col:
-	lw $t4, NDCOLS
-	bge $t1, $t4, main_init_spaces_colend
+	lw $t2, NDCOLS
+	bge $s5, $t2, main_init_spaces_col_end
 	nop
 
-	#Find the correct index display[t0][t1] = t0*NDCOLS + t1
-	mul $t2, $t0, $t4
-	add $t2, $t2, $t1
-	addu $t2, $t2, $t6
+	#display[i][j] = i * NDCOLS + j
+	mul $t2, $t2, $s4
+	add $t2, $t2, $s5
+	la $t3, display
+	add $t2, $t2, $t3
 	
-	sb  $t7, ($t2)
+	li $t3, ' '
+	sb  $t3, ($t2)
 
 main_init_spaces_skip:
-	addi $t1, $t1, 1
+	addi $s5, $s5, 1
 	j main_init_spaces_col
 	nop
 
-main_init_spaces_colend:
-	addi $t0, $t0, 1
+main_init_spaces_col_end:
+	addi $s4, $s4, 1
 	j main_init_spaces_row
 	nop
 
-main_init_spaces_rowend:
+main_init_spaces_row_end:
 
 #####################################################################
-#Bigchars array
+# Bigchars array
 
 # Common Registers:
 #					-t0: i counter
-#					-t1: row 
-#					-t2: col
-#					-t4: string[i]
-#					-t5: Big string address
-#					-t7: CHRSIZE
+#					-t1: j counter 
+#					-s4: rows
+#					-s5: cols
 
 	li $t0, 0                        
-	la $t5, bigString
-	lw $t7, CHRSIZE
 
 main_create_big:
-	li $t1, 0
-	li $t2, 0
 	bge $t0, $s0, main_create_bigend
 	nop
+	li $s4, 0
+	li $s5, 0
 	
-	#Get letter at index
-	lw $t3, bigString
-	addu $t4, $t3, $t0
-	lb $t4, ($t4)
-
-	#Store a byte at an address
-	#sb $char, $address
+	#Get letter at index, i.e theString[i]
+	la $t2, theString
+	add $t2, $t2, $t0
+	lb $s3, ($t2)
 
 	#Determine which hash matrix to store
-	#if space
-	li $t3, ' '
-	beq $t4, $t3, main_create_spaces
+		#if space
+	li $t2, ' '
+	beq $s3, $t2, main_create_spaces
 	nop
 	
-	#if uppercase
-	move $a0, $t4
+		#if uppercase
+	move $a0, $s3
 	jal isUpper
 	nop
 	bne $v0, $zero, main_create_upper
 	nop
 
-	#if lowercase
+		#if lowercase
 	jal isLower
 	nop
 	bne $v0, $zero, main_create_lower
 	nop
 
 main_create_upper:
-	#which letter, and it's position in matrix
-
-	addi $t4, $t4, -'A'
+	sub $t2, $s3, 'A'
 	j main_create_letter
 
-main_create_letter:
-	bge $t1, $t7, main_create_letter_end
-	
-
-main_create_letter_end:
-	
-	
+main_create_lower:
+	sub $t2, $s3, 'a'
+	addi $t2, $t2, 26
 
 main_create_letter:
 	lw $t3, CHRSIZE
-	mul $t3, $t3, $t3
-	mul $t4, $t4, $t3
-
-	#[Row][Column] = row*row_size + column
-	lw $t3, CHRSIZE
-	mul $t3, $t3, $t1
-	add $t3, $t3, $t2
-
-	#Access character at the index %%
-	add $t4, $t3, $t4
-	la $t3, all_chars
-	addu $t4, $t4, $t3
-	lb $t4, ($t4)
+	bge $s4, $t3, main_create_gen_end
+	move $s5, $zero
 	
-	#Calculate position to store character
-	#Row index: rowlength * row_no
-	lw $t3, CHRSIZE
+
+main_create_letter_loop:
+	bge $s5, $t3, main_create_letter_loop_end
+
+	#Calculate offset in bigString = row * NDSCOL + col + i * (CHRSIZE+1)
 	addi $t3, $t3, 1
-	lw $t6, MAXCHARS
-	mul $t6, $t6, $t3
-	mul $t6, $t6, $t1
-
-	add $t3, $t7, 1
 	mul $t3, $t3, $t0
-	add $t3, $t3, $t2 
+	add $t3, $t3, $s5
+	lw $t4, NDSCOL
+	mul $t4, $t4, $s4
+	add $t3, $t3, $t4
+	la $t4, bigString
+	add $t3, $t3, $t4
+	
+	# Offset in all_chars = Which * CHRSIZE^2 + row * CHRSIZE + col
+	lw $t7, CHRSIZE
+	mul $t4, $s4, $t7
+	add $t4, $t4, $s5
+	mul $t7, $t7, $t7
+	mul $t2, $t2, $t7
 
-	add $t3, $t3, $t6
+	add $t2, $t2, $t4
+	la $t4, all_chars
+	add $t2, $t2, $t4
+	lb $t2, ($t2)
 
-	add $t6, $t6, $t3
-	addu $t6, $t6, $t5
-	sb $t4, ($t6)
+	sb $t2, ($t3)
 
-	#Enter it into display matrix
-main_create_spaces:
-	bge $t1, $t7, main_create_gen_end
+main_create_letter_loop_step:
+	addi $s5, $s5, 1
+	j main_create_letter_loop
+
+main_create_letter_loop_end:
+	addi $s4, $s4, 1
+	j main_create_letter
+
+main_create_big_spaces:
+	lw $t2, CHRSIZE
+	bge $s4, $t2, main_create_gen_end
 	nop
-	li $t2, 0 #reset col
+	li $t1, 0 
 
-main_create_spaces_loop:
-	bge $t2, $t7, main_create_spaces_loopend
+main_create_big_spaces_loop:
+	lw $t2, CHRSIZE
+	bge $s5, $t2, main_create_big_spaces_loopend
 	nop
 
-	#Calculate offset
-	#Find [row] = max_chars*(CHRSIZE+1) = 1000 %%
-	li $t4, 1
-	add $t4, $t7, $t4
-	lw $t6, MAXCHARS
-	mul $t4, $t4, $t6
-
-	#[col + i * (CHRSIZE+1)], ie add column offset
-	li $t6, 1
-	add $t6, $t6, $t7
-	mul $t6, $t6, $t0
-	add $t6, $t6, $t2
-
-	add $t4, $t4, $t6
+	#Calculate offset in bigString = row * NDSCOL + col + i * (CHRSIZE+1)
+	addi $t2, $t2, 1
+	mul $t2, $t2, $t0
+	add $t2, $t2, $s5
+	lw $t3, NDSCOL
+	mul $t3, $t3, $s4
+	add $t2, $t2, $t3
 
 	#Set the index position to space
-	add $t4, $t4, $t5
-	sb $t3, ($t4)
+	li $t3, ' '
+	sb $t3, ($t2)
 
-
-main_create_spaces_skip:
-	addi $t2, $t2, 1
+main_create_big_spaces_step:
+	addi $s5, $s5, 1
 	j main_create_big_space_loop
 	nop
 
-main_create_spaces_loopend:
-	addi $t1, $t1, 1
-	j main_create_spaces
+main_create_big_spaces_loopend:
+	addi $s4, $ts4, 1
+	j main_create_big_spaces
 	nop
 
-main_create_big_gen_end:
+main_create_gen_end:
+	lw $t7, CHRSIZE
+	addi $t2, $t7, 1
+	mul $t2, $t2, $t0
+	add $t2, $t2, $t7
+	move $s5, $t2
+	li $s4, 0
+
+main_create_gen_end_loop:
+	bge $s4, $t7, main_create_gen_end_loop_end
+
+	# Calculate offset of bigString = row * NDSCOLS + col
+	lw $t2, NDSCOLS
+	mul $t2, $t2, $s4
+	add $t2, $t2, $s5
+	la $t3, bigString
+	add $t2, $t2, $t3
+	li $t3, ' '
+	sb $t3, ($t2)
+
+	addi $s4, $s4, 1
+	j main_create_gen_end_loop
+
+main_create_gen_end_loop_end:
 	addi $t0, $t0, 1
-	j main_create_big
+	j main_create_big 
 
 main_create_bigend:
 
 #####################################################################
 #INTERATIONS
+#Common registers:
+#					- $t2: iterations
+#					- $t3: starting_col
 
-li $t0, 0
-lw $t7, NDCOLS
-lw $t6, $a0  #%%
-add $t7, $t7, $t6
-lw $t6, NDCOLS
-addi $t6, $t6, -1
+	lw $t7, NDCOLS
+	add $t2, $s1, $t7
+	sub $t3, $t7, 1
 
+	li $t0, 0
 
 main_interations_start:
-	bge $t0, $t7, main_interations_end
+	bge $t0, $t2, main_interations_end
 	nop
-	move $a0, $t6
+	move $a0, $t3
 	move $a1, $s1
 	jal setUpDisplay	
 	nop
+
 	jal showDisplay
 	nop
-	addi $t6, -1
+	
+	sub $t3, $t3, 1
 	li $a0, 1
 	jal delay
 	nop
 
+	addi $t0, $t0, 1
 	j main_interations_start
 	nop
 
 main_interations_end:
 
 	li v0, 0
+
+########################################################################
 
 main__post:
 	# tear down stack frame
@@ -483,7 +501,6 @@ main__post:
 	jr	$ra
 	nop	# in delay slot
 
-########################################################################
 # .TEXT <setUpDisplay>
 	.text
 setUpDisplay:
