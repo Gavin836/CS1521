@@ -301,7 +301,6 @@ main_init_spaces_col_end:
 	nop
 
 main_init_spaces_row_end:
-
 #####################################################################
 # Bigchars array
 
@@ -359,6 +358,8 @@ main_create_letter:
 	
 
 main_create_letter_loop:
+    la      $t3, CHRSIZE
+	lw 		$t3, ($t3)
 	bge     $s5, $t3, main_create_letter_loop_end
 
 	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
@@ -389,7 +390,7 @@ main_create_letter_loop:
 
 main_create_letter_loop_step:
 	addi    $s5, $s5, 1
-	j       main_create_letter
+	j       main_create_letter_loop
 
 main_create_letter_loop_end:
 	addi    $s4, $s4, 1
@@ -488,7 +489,7 @@ main_interations_start:
 	
 	sub     $t3, $t3, 1
 	li      $a0, 1
-	jal     delay
+	#jal     delay
 	nop
 
 	addi    $t0, $t0, 1
@@ -503,7 +504,7 @@ main_interations_end:
 
 main__post:
 	# tear down stack frame
-	lw      $s5, -20($fp)
+	lw      $s5, -28($fp)
 	lw      $s4, -24($fp)
 	lw      $s3, -20($fp)
 	lw	    $s2, -16($fp)
@@ -514,6 +515,7 @@ main__post:
 	lw	    $fp, ($fp)
 	jr	    $ra
 	nop	    # in delay slot
+
 
 # .TEXT <setUpDisplay>
 	.text
@@ -550,7 +552,7 @@ setUpDisplay:
 	sw 	    $s1, -12($fp)
 	sw  	$s2, -16($fp)
 	sw 	    $s3, -20($fp)
-	la	    $sp, -24($fp)
+	addi	$sp, $sp, -24
 
 	# ... TODO ...
 	# If starting < 0
@@ -558,7 +560,7 @@ setUpDisplay:
 
 	bge     $a0, $zero, setUpDisplay_else
 	li      $s1, 0
-	lw      $s3, ($a0)
+	move    $s3, $a0
 	li      $t0, -1
 	mul     $s3, $s3, $t1
 
@@ -679,15 +681,14 @@ showDisplay:
 	sw  	$s0, -8($fp)
 	sw 	    $s1, -12($fp)
 	sw 	    $s2, -16($fp)
-	la	    $sp, -20($fp)  #%%
+	addi    $sp, $sp, -20
 
 	la	    $a0, CLEAR
-	lw 		$a0, ($a0)
 	li	    $v0, 4 
 	syscall
 
 	li      $s0, 1
-showDisplay_rows: #%%
+showDisplay_rows:
 	la      $t1, NROWS
 	lw 		$t1, ($t1)
 	bge     $s0, $t1, showDisplay_rows_end
@@ -696,12 +697,12 @@ showDisplay_rows: #%%
 showDisplay_cols:
 	la      $t0, NDCOLS
 	lw 		$t0, ($t0)
-	bge     $s1, $t1, showDisplay_cols
+	bge     $s1, $t0, showDisplay_cols
 
 	#calculate offset display[i][j] = i * NDCOLS + j
 	mul     $t0, $t0, $s0
 	add     $t0, $t0, $s1
-	lw      $t1, display
+	la      $t1, display
 	add     $t0, $t1, $t0
 	lw      $a0, ($t0)
 	li      $v0, 11
@@ -722,7 +723,7 @@ showDisplay_cols_end:
 	nop
 
 showDisplay_rows_end:
-	# tear down stack frame %%
+	# tear down stack frame
 	lw	    $s2, -16($fp)
 	lw	    $s1, -12($fp)
 	lw	    $s0, -8($fp)
