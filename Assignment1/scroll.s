@@ -269,13 +269,15 @@ main_theLength_ge_1:
     li      $s4, 0            
 
 main_init_spaces_row:
-	lw      $t1, NROWS
+	la      $t1, NROWS
+	lw 		$t1, ($t1)
 	bge     $s4, $t1, main_init_spaces_row_end
 	nop
 	li      $s5, 0                      
 
 main_init_spaces_col:
-	lw      $t2, NDCOLS
+	la      $t2, NDCOLS
+	lw 		$t2, ($t2)
 	bge     $s5, $t2, main_init_spaces_col_end
 	nop
 
@@ -350,7 +352,8 @@ main_create_lower:
 	addi    $t2, $t2, 26
 
 main_create_letter:
-	lw      $t3, CHRSIZE
+	la      $t3, CHRSIZE
+	lw 		$t3, ($t3)
 	bge     $s4, $t3, main_create_gen_end
 	move    $s5, $zero
 	
@@ -362,14 +365,16 @@ main_create_letter_loop:
 	addi    $t3, $t3, 1
 	mul     $t3, $t3, $t0
 	add     $t3, $t3, $s5
-	lw      $t4, NSCOLS
+	la      $t4, NSCOLS
+	lw 		$t4, ($t4)
 	mul     $t4, $t4, $s4
 	add     $t3, $t3, $t4
 	la      $t4, bigString
 	add     $t3, $t3, $t4
 	
 	# Offset in all_chars = Which * CHRSIZE^2 + row * CHRSIZE + col
-	lw      $t7, CHRSIZE
+	la      $t7, CHRSIZE
+	lw 		$t7, ($t7)
 	mul     $t4, $s4, $t7
 	add     $t4, $t4, $s5
 	mul     $t7, $t7, $t7
@@ -391,13 +396,15 @@ main_create_letter_loop_end:
 	j       main_create_letter
 
 main_create_big_spaces:
-	lw      $t2, CHRSIZE
+	la      $t2, CHRSIZE
+	lw 		$t2, ($t2)
 	bge     $s4, $t2, main_create_gen_end
 	nop
 	li      $t1, 0 
 
 main_create_big_spaces_loop:
-	lw      $t2, CHRSIZE
+	la      $t2, CHRSIZE
+	lw 		$t2, ($t2)
 	bge     $s5, $t2, main_create_big_spaces_loopend
 	nop
 
@@ -405,7 +412,8 @@ main_create_big_spaces_loop:
 	addi    $t2, $t2, 1
 	mul     $t2, $t2, $t0
 	add     $t2, $t2, $s5
-	lw      $t3, NSCOLS
+	la      $t3, NSCOLS
+	lw 		$t3, ($t3)
 	mul     $t3, $t3, $s4
 	add     $t2, $t2, $t3
 
@@ -424,7 +432,8 @@ main_create_big_spaces_loopend:
 	nop
 
 main_create_gen_end:
-	lw      $t7, CHRSIZE
+	la      $t7, CHRSIZE
+	lw 		$t7, ($t7)
 	addi    $t2, $t7, 1
 	mul     $t2, $t2, $t0
 	add     $t2, $t2, $t7
@@ -435,7 +444,8 @@ main_create_gen_end_loop:
 	bge     $s4, $t7, main_create_gen_end_loop_end
 
 	# Calculate offset of bigString = row * NSCOLS + col
-	lw      $t2, NSCOLS
+	la      $t2, NSCOLS
+	lw 		$t2, ($t2)
 	mul     $t2, $t2, $s4
 	add     $t2, $t2, $s5
 	la      $t3, bigString
@@ -458,7 +468,8 @@ main_create_bigend:
 #					- $t2: iterations
 #					- $t3: starting_col
 
-	lw      $t7, NSCOLS
+	la      $t7, NSCOLS
+	lw 		$t7, ($t7)
 	add     $t2, $s1, $t7
 	sub     $t3, $t7, 1
 
@@ -556,7 +567,8 @@ setUpDisplay_else:
 	li      $s0, 0
 
 setUpDisplay_space_row_loop:
-	lw      $t0, NROWS
+	la      $t0, NROWS
+	lw 		$t0, ($t0)
 	bge     $s0, $t0, setUpDisplay_space_row_loop_end
 
 	#Calculate the offset display[row][col] = ROWS * NROWS + OUTCOLS 
@@ -584,16 +596,19 @@ setUpDisplay_bigstring:
 	move    $s2, $s3
 	bge     $s2, $a1, setUpDisplay_bigstring_end
 	
-	lw      $t1, NDCOLS
+	la      $t1, NDCOLS
+	lw 		$t1, ($t1)
 	bge     $s1, $t1, setUpDisplay_bigstring_end
 	li      $s0, 0
 
 setUpDisplay_bigstring_row:
-	lw      $t0, NROWS 
+	la      $t0, NROWS 
+	lw 		$t0, ($t0)
 	bge     $s0, $t0, setUpDisplay_bigstring_row_end
 
 #Calculate offset in bigString = row*NSCOLS + in_col
-	lw      $t0, NSCOLS
+	la      $t0, NSCOLS
+	lw 		$t0, ($t0)
 	la      $t1, bigString
 	mul     $t7, $t0, $s0
 	add     $t7, $t7, $s2
@@ -601,7 +616,8 @@ setUpDisplay_bigstring_row:
 	lb      $t7, ($t7)
 
 #Calculate offset in display = row*NDCOLS + out_col
-	lw      $t0, NDCOLS
+	la      $t0, NDCOLS
+	lw 		$t0, ($t0)
 	la      $t1, display
 	mul     $t6, $t0, $s0
 	add     $t6, $t6, $s1
@@ -666,17 +682,20 @@ showDisplay:
 	la	    $sp, -20($fp)  #%%
 
 	la	    $a0, CLEAR
+	lw 		$a0, ($a0)
 	li	    $v0, 4 
 	syscall
 
 	li      $s0, 1
 showDisplay_rows: #%%
-	lw      $t1, NROWS
+	la      $t1, NROWS
+	lw 		$t1, ($t1)
 	bge     $s0, $t1, showDisplay_rows_end
 	li      $s1, 0
 
 showDisplay_cols:
-	lw      $t0, NDCOLS
+	la      $t0, NDCOLS
+	lw 		$t0, ($t0)
 	bge     $s1, $t1, showDisplay_cols
 
 	#calculate offset display[i][j] = i * NDCOLS + j
