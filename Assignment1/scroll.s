@@ -71,19 +71,19 @@ bigString:	.space	81000	# NROWS * NSCOLS
 	.text
 main:
 
-# Frame:	$fp, $ra, ...
+# Frame:	$fp, $ra, $s0, $s1, $s2, $s3, $s4, $s5
 # Uses:		$a0, $a1, $t0, $t1, $t2, $s0, $s1
 # Clobbers:	...
 
 # Locals:
 #	- `theLength' in $s0
 #	- `bigLength' in $s1
-#	- `ch' in $s2
+#	- `ch' in $s3
 #	- `str' in $t2
-#	- `i' in $...
-#	- `j' in $...
-#	- `row' in $...
-#	- `col' in $...
+#	- `i' in $t0
+#	- `j' in $t1
+#	- `row' in $s4
+#	- `col' in $s5
 #	- `iterations' in $...
 #	- `startingCol' in $...
 
@@ -263,27 +263,29 @@ main_theLength_ge_1:
 # initialise the display to all spaces
 
 # Common registers:
-#			- s4: rows
-#			- s5: cols
+#           - $s0: rows
+#           - $s1: col
+#			- t0: i
+#			- t1: j
 
-    li      $s4, 0            
+    li      $t0, 0            
 
 main_init_spaces_row:
-	la      $t1, NROWS
-	lw 		$t1, ($t1)
-	bge     $s4, $t1, main_init_spaces_row_end
+	la      $t7, NROWS
+	lw 		$t7, ($t7)
+	bge     $t0, $t7, main_init_spaces_row_end
 	nop
-	li      $s5, 0                      
+	li      $t1, 0                      
 
 main_init_spaces_col:
 	la      $t2, NDCOLS
 	lw 		$t2, ($t2)
-	bge     $s5, $t2, main_init_spaces_col_end
+	bge     $t1, $t2, main_init_spaces_col_end
 	nop
 
 	#display[i][j] = i * NDCOLS + j
-	mul     $t2, $t2, $s4
-	add     $t2, $t2, $s5
+	mul     $t2, $t2, $t0
+	add     $t2, $t2, $t1
 	la      $t3, display
 	add     $t2, $t2, $t3
 	
@@ -291,12 +293,12 @@ main_init_spaces_col:
 	sb      $t3, ($t2)
 
 main_init_spaces_skip:
-	addi    $s5, $s5, 1
+	addi    $t1, $t1, 1
 	j       main_init_spaces_col
 	nop
 
 main_init_spaces_col_end:
-	addi    $s4, $s4, 1
+	addi    $t0, $t0, 1
 	j       main_init_spaces_row
 	nop
 
@@ -318,7 +320,7 @@ main_create_big:
 	li      $s4, 0
 	li      $s5, 0
 	
-	#Get letter at index, i.e theString[i]
+	#ch = theString[i]
 	la      $t2, theString
 	add     $t2, $t2, $t0
 	lb      $s3, ($t2)
@@ -337,17 +339,22 @@ main_create_big:
 	nop
 
 		#if lowercase
+	move    $a0, $s3	
 	jal     isLower
 	nop
 	bne     $v0, $zero, main_create_lower
 	nop
 
 main_create_upper:
-	sub     $t2, $s3, 'A'
+    # which = ch - 'A'
+    li      $t3, 'A'
+	sub     $t2, $s3, $t3
 	j       main_create_letter
 
 main_create_lower:
-	sub     $t2, $s3, 'a'
+    # which = ch - 'a' + 26
+    li      $t3, 'a'
+	sub     $t2, $s3, $t3
 	addi    $t2, $t2, 26
 
 main_create_letter:
@@ -373,7 +380,7 @@ main_create_letter_loop:
 	la      $t4, bigString
 	add     $t3, $t3, $t4
 	
-	# Offset in all_chars = Which * CHRSIZE^2 + row * CHRSIZE + col
+	# Offset in all_chars = which * CHRSIZE^2 + row * CHRSIZE + col
 	la      $t7, CHRSIZE
 	lw 		$t7, ($t7)
 	mul     $t4, $s4, $t7
@@ -401,7 +408,7 @@ main_create_big_spaces:
 	lw 		$t2, ($t2)
 	bge     $s4, $t2, main_create_gen_end
 	nop
-	li      $t1, 0 
+	li      $s5, 0 
 
 main_create_big_spaces_loop:
 	la      $t2, CHRSIZE
@@ -418,7 +425,9 @@ main_create_big_spaces_loop:
 	mul     $t3, $t3, $s4
 	add     $t2, $t2, $t3
 
-	#Set the index position to space
+	#Set the index position to space char
+	la      $t4, bigString
+	add     $t2, $t2, $t4
 	li      $t3, ' '
 	sb      $t3, ($t2)
 
@@ -428,11 +437,12 @@ main_create_big_spaces_step:
 	nop
 
 main_create_big_spaces_loopend:
-	addi    $s4, $t4, 1
+	addi    $s4, $s4, 1
 	j       main_create_big_spaces
 	nop
 
 main_create_gen_end:
+    # col = (i * (CHRSIZE+1)) + CHRSIZE
 	la      $t7, CHRSIZE
 	lw 		$t7, ($t7)
 	addi    $t2, $t7, 1
@@ -468,10 +478,11 @@ main_create_bigend:
 #Common registers:
 #					- $t2: iterations
 #					- $t3: starting_col
-
-	la      $t7, NSCOLS
+    # iterations = NDCOLS+bigLength
+	la      $t7, NDCOLS
 	lw 		$t7, ($t7)
 	add     $t2, $s1, $t7
+	# starting_col = NDCOLS-1
 	sub     $t3, $t7, 1
 
 	li      $t0, 0
@@ -498,7 +509,7 @@ main_interations_start:
 
 main_interations_end:
 
-    move    $v0, $0
+    move    $v0, $zero
 
 ########################################################################
 
@@ -557,21 +568,26 @@ setUpDisplay:
 	# ... TODO ...
 	# If starting < 0
 	li      $s1, 0
-
+  
 	bge     $a0, $zero, setUpDisplay_else
 	li      $s1, 0
 	move    $s3, $a0
 	li      $t0, -1
 	mul     $s3, $s3, $t1
-
+    j       setupUpDisplay_bigstring_bridge
+    nop
+    
 setUpDisplay_else:
-	bge     $s1, $a1, setUpDisplay_space_else_end
+    move    $s3, $a0
+	bge     $s1, $a1, setUpDisplay_space_else_end 
+	nop         
 	li      $s0, 0
 
 setUpDisplay_space_row_loop:
 	la      $t0, NROWS
 	lw 		$t0, ($t0)
 	bge     $s0, $t0, setUpDisplay_space_row_loop_end
+	nop
 
 	#Calculate the offset display[row][col] = ROWS * NROWS + OUTCOLS 
 	mul     $t0, $t0, $s0
@@ -585,18 +601,24 @@ setUpDisplay_space_row_loop:
 setUpDisplay_space_row_loop_step:
 	addi    $s0, 1
 	j       setUpDisplay_space_row_loop
+	nop
 
 setUpDisplay_space_row_loop_end:
 	addi    $s1, 1
 	j       setUpDisplay_else
+	nop
 
 setUpDisplay_space_else_end:
 	li      $s3, 0
 
+setupUpDisplay_bigstring_bridge:
+    # in_col = first_col
+    move    $s2, $s3
+
 #Copy bigString into display
 setUpDisplay_bigstring: 
-	move    $s2, $s3
 	bge     $s2, $a1, setUpDisplay_bigstring_end
+	nop
 	
 	la      $t1, NDCOLS
 	lw 		$t1, ($t1)
@@ -607,34 +629,38 @@ setUpDisplay_bigstring_row:
 	la      $t0, NROWS 
 	lw 		$t0, ($t0)
 	bge     $s0, $t0, setUpDisplay_bigstring_row_end
+	nop
 
 #Calculate offset in bigString = row*NSCOLS + in_col
 	la      $t0, NSCOLS
 	lw 		$t0, ($t0)
-	la      $t1, bigString
 	mul     $t7, $t0, $s0
 	add     $t7, $t7, $s2
+	la      $t1, bigString
 	add     $t7, $t7, $t1
 	lb      $t7, ($t7)
 
 #Calculate offset in display = row*NDCOLS + out_col
 	la      $t0, NDCOLS
 	lw 		$t0, ($t0)
-	la      $t1, display
 	mul     $t6, $t0, $s0
 	add     $t6, $t6, $s1
+	la      $t1, display
 	add     $t6, $t6, $t1
 	sb      $t7, ($t6)
 
 setUpDisplay_bigstring_row_step:
 	addi    $s0, $s0, 1
 	j       setUpDisplay_bigstring_row
+	nop
 
 setUpDisplay_bigstring_row_end:
+    #increment out_col and in_col
 	addi    $s1, $s1, 1
 	addi    $s2, $s2, 1
 
 	j   setUpDisplay_bigstring
+	nop
 
 setUpDisplay_bigstring_end:
 
@@ -680,14 +706,13 @@ showDisplay:
 	sw	    $ra, -4($fp)
 	sw  	$s0, -8($fp)
 	sw 	    $s1, -12($fp)
-	sw 	    $s2, -16($fp)
-	addi    $sp, $sp, -20
+	addi    $sp, $sp, -16
 
 	la	    $a0, CLEAR
 	li	    $v0, 4 
 	syscall
 
-	li      $s0, 1
+	li      $s0, 0
 showDisplay_rows:
 	la      $t1, NROWS
 	lw 		$t1, ($t1)
@@ -695,28 +720,27 @@ showDisplay_rows:
 	li      $s1, 0
 
 showDisplay_cols:
-	la      $t0, NDCOLS
-	lw 		$t0, ($t0)
-	bge     $s1, $t0, showDisplay_cols
+	lw      $t0, NDCOLS
+	bge     $s1, $t0, showDisplay_cols_end
 
 	#calculate offset display[i][j] = i * NDCOLS + j
 	mul     $t0, $t0, $s0
 	add     $t0, $t0, $s1
 	la      $t1, display
 	add     $t0, $t1, $t0
-	lw      $a0, ($t0)
+	lb      $a0, ($t0)
 	li      $v0, 11
 	syscall
 
 showDisplay_cols_step:
 	addi    $s1, $s1, 1
-	j       showDisplay_rows
+	j       showDisplay_cols
 	nop
 
 showDisplay_cols_end:
 	addi    $s0, $s0, 1
 	li      $a0, '\n'
-	li      $v0, 4
+	li      $v0, 11
 	syscall
 
 	j showDisplay_rows
@@ -724,7 +748,6 @@ showDisplay_cols_end:
 
 showDisplay_rows_end:
 	# tear down stack frame
-	lw	    $s2, -16($fp)
 	lw	    $s1, -12($fp)
 	lw	    $s0, -8($fp)
 	lw	    $ra, -4($fp)
@@ -839,7 +862,7 @@ delay__post:
 	.text
 isUpper:
 
-# Frame:	$fp, $ra, ...
+# Frame:	$fp, $ra
 # Uses:		$a0, ...
 # Clobbers:	$v0, ...
 
@@ -870,7 +893,7 @@ isUpper_ch_ge_a:
 	bgt	    $a0, $v0, isUpper_ch_gt_z
 	nop	    # in delay slot
 isUpper_ch_le_z:
-	addi	$v0, $zero, 1
+	li	$v0, 1
 	j	    isUpper_ch_phi
 	nop	    # in delay slot
 
@@ -879,7 +902,6 @@ isUpper_ch_lt_a:
 
 isUpper_ch_gt_z:
 	move	$v0, $zero
-	j       isUpper__post
 	# fallthrough
 
 isUpper_ch_phi:
@@ -934,7 +956,7 @@ isLower_ch_ge_a:
 	nop	    # in delay slot
 
 isLower_ch_le_z:
-	addi	$v0, $zero, 1
+	li      $v0, 1
 	j	    isLower_ch_phi
 	nop	    # in delay slot
 
@@ -943,8 +965,6 @@ isLower_ch_lt_a:
 
 isLower_ch_gt_z:
 	move	$v0, $zero
-	j       isLower__post
-	nop
 
 	# fallthrough
 isLower_ch_phi:
