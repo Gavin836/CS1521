@@ -924,7 +924,7 @@ main_create_letter_loop:
 
 main_create_letter_loop_step:
 	addi    $s5, $s5, 1
-	j       main_create_letter_loop
+	j       main_create_letter
 
 main_create_letter_loop_end:
 	addi    $s4, $s4, 1
