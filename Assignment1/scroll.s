@@ -266,36 +266,36 @@ main_theLength_ge_1:
 #			- s4: rows
 #			- s5: cols
 
-li $s4, 0            
+    li      $s4, 0            
 
 main_init_spaces_row:
-	lw $t1, NROWS
-	bge $s4, $t1, main_init_spaces_row_end
+	lw      $t1, NROWS
+	bge     $s4, $t1, main_init_spaces_row_end
 	nop
-	li $s5, 0                      
+	li      $s5, 0                      
 
 main_init_spaces_col:
-	lw $t2, NDCOLS
-	bge $s5, $t2, main_init_spaces_col_end
+	lw      $t2, NDCOLS
+	bge     $s5, $t2, main_init_spaces_col_end
 	nop
 
 	#display[i][j] = i * NDCOLS + j
-	mul $t2, $t2, $s4
-	add $t2, $t2, $s5
-	la $t3, display
-	add $t2, $t2, $t3
+	mul     $t2, $t2, $s4
+	add     $t2, $t2, $s5
+	la      $t3, display
+	add     $t2, $t2, $t3
 	
-	li $t3, ' '
-	sb  $t3, ($t2)
+	li      $t3, ' '
+	sb      $t3, ($t2)
 
 main_init_spaces_skip:
-	addi $s5, $s5, 1
-	j main_init_spaces_col
+	addi    $s5, $s5, 1
+	j       main_init_spaces_col
 	nop
 
 main_init_spaces_col_end:
-	addi $s4, $s4, 1
-	j main_init_spaces_row
+	addi    $s4, $s4, 1
+	j       main_init_spaces_row
 	nop
 
 main_init_spaces_row_end:
@@ -312,143 +312,143 @@ main_init_spaces_row_end:
 	li $t0, 0                        
 
 main_create_big:
-	bge $t0, $s0, main_create_bigend
+	bge     $t0, $s0, main_create_bigend
 	nop
-	li $s4, 0
-	li $s5, 0
+	li      $s4, 0
+	li      $s5, 0
 	
 	#Get letter at index, i.e theString[i]
-	la $t2, theString
-	add $t2, $t2, $t0
-	lb $s3, ($t2)
+	la      $t2, theString
+	add     $t2, $t2, $t0
+	lb      $s3, ($t2)
 
 	#Determine which hash matrix to store
 		#if space
-	li $t2, ' '
-	beq $s3, $t2, main_create_big_spaces
+	li      $t2, ' '
+	beq     $s3, $t2, main_create_big_spaces
 	nop
 	
 		#if uppercase
-	move $a0, $s3
-	jal isUpper
+	move    $a0, $s3
+	jal     isUpper
 	nop
-	bne $v0, $zero, main_create_upper
+	bne     $v0, $zero, main_create_upper
 	nop
 
 		#if lowercase
-	jal isLower
+	jal     isLower
 	nop
-	bne $v0, $zero, main_create_lower
+	bne     $v0, $zero, main_create_lower
 	nop
 
 main_create_upper:
-	sub $t2, $s3, 'A'
-	j main_create_letter
+	sub     $t2, $s3, 'A'
+	j       main_create_letter
 
 main_create_lower:
-	sub $t2, $s3, 'a'
-	addi $t2, $t2, 26
+	sub     $t2, $s3, 'a'
+	addi    $t2, $t2, 26
 
 main_create_letter:
-	lw $t3, CHRSIZE
-	bge $s4, $t3, main_create_gen_end
-	move $s5, $zero
+	lw      $t3, CHRSIZE
+	bge     $s4, $t3, main_create_gen_end
+	move    $s5, $zero
 	
 
 main_create_letter_loop:
-	bge $s5, $t3, main_create_letter_loop_end
+	bge     $s5, $t3, main_create_letter_loop_end
 
 	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
-	addi $t3, $t3, 1
-	mul $t3, $t3, $t0
-	add $t3, $t3, $s5
-	lw $t4, NSCOLS
-	mul $t4, $t4, $s4
-	add $t3, $t3, $t4
-	la $t4, bigString
-	add $t3, $t3, $t4
+	addi    $t3, $t3, 1
+	mul     $t3, $t3, $t0
+	add     $t3, $t3, $s5
+	lw      $t4, NSCOLS
+	mul     $t4, $t4, $s4
+	add     $t3, $t3, $t4
+	la      $t4, bigString
+	add     $t3, $t3, $t4
 	
 	# Offset in all_chars = Which * CHRSIZE^2 + row * CHRSIZE + col
-	lw $t7, CHRSIZE
-	mul $t4, $s4, $t7
-	add $t4, $t4, $s5
-	mul $t7, $t7, $t7
-	mul $t2, $t2, $t7
+	lw      $t7, CHRSIZE
+	mul     $t4, $s4, $t7
+	add     $t4, $t4, $s5
+	mul     $t7, $t7, $t7
+	mul     $t2, $t2, $t7
 
-	add $t2, $t2, $t4
-	la $t4, all_chars
-	add $t2, $t2, $t4
-	lb $t2, ($t2)
+	add     $t2, $t2, $t4
+	la      $t4, all_chars
+	add     $t2, $t2, $t4
+	lb      $t2, ($t2)
 
-	sb $t2, ($t3)
+	sb      $t2, ($t3)
 
 main_create_letter_loop_step:
-	addi $s5, $s5, 1
-	j main_create_letter_loop
+	addi    $s5, $s5, 1
+	j       main_create_letter_loop
 
 main_create_letter_loop_end:
-	addi $s4, $s4, 1
-	j main_create_letter
+	addi    $s4, $s4, 1
+	j       main_create_letter
 
 main_create_big_spaces:
-	lw $t2, CHRSIZE
-	bge $s4, $t2, main_create_gen_end
+	lw      $t2, CHRSIZE
+	bge     $s4, $t2, main_create_gen_end
 	nop
-	li $t1, 0 
+	li      $t1, 0 
 
 main_create_big_spaces_loop:
-	lw $t2, CHRSIZE
-	bge $s5, $t2, main_create_big_spaces_loopend
+	lw      $t2, CHRSIZE
+	bge     $s5, $t2, main_create_big_spaces_loopend
 	nop
 
 	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
-	addi $t2, $t2, 1
-	mul $t2, $t2, $t0
-	add $t2, $t2, $s5
-	lw $t3, NSCOLS
-	mul $t3, $t3, $s4
-	add $t2, $t2, $t3
+	addi    $t2, $t2, 1
+	mul     $t2, $t2, $t0
+	add     $t2, $t2, $s5
+	lw      $t3, NSCOLS
+	mul     $t3, $t3, $s4
+	add     $t2, $t2, $t3
 
 	#Set the index position to space
-	li $t3, ' '
-	sb $t3, ($t2)
+	li      $t3, ' '
+	sb      $t3, ($t2)
 
 main_create_big_spaces_step:
-	addi $s5, $s5, 1
-	j main_create_big_spaces_loop
+	addi    $s5, $s5, 1
+	j       main_create_big_spaces_loop
 	nop
 
 main_create_big_spaces_loopend:
-	addi $s4, $t4, 1
-	j main_create_big_spaces
+	addi    $s4, $t4, 1
+	j       main_create_big_spaces
 	nop
 
 main_create_gen_end:
-	lw $t7, CHRSIZE
-	addi $t2, $t7, 1
-	mul $t2, $t2, $t0
-	add $t2, $t2, $t7
-	move $s5, $t2
-	li $s4, 0
+	lw      $t7, CHRSIZE
+	addi    $t2, $t7, 1
+	mul     $t2, $t2, $t0
+	add     $t2, $t2, $t7
+	move    $s5, $t2
+	li      $s4, 0
 
 main_create_gen_end_loop:
-	bge $s4, $t7, main_create_gen_end_loop_end
+	bge     $s4, $t7, main_create_gen_end_loop_end
 
 	# Calculate offset of bigString = row * NSCOLS + col
-	lw $t2, NSCOLS
-	mul $t2, $t2, $s4
-	add $t2, $t2, $s5
-	la $t3, bigString
-	add $t2, $t2, $t3
-	li $t3, ' '
-	sb $t3, ($t2)
+	lw      $t2, NSCOLS
+	mul     $t2, $t2, $s4
+	add     $t2, $t2, $s5
+	la      $t3, bigString
+	add     $t2, $t2, $t3
+	li      $t3, ' '
+	sb      $t3, ($t2)
 
-	addi $s4, $s4, 1
-	j main_create_gen_end_loop
+	addi    $s4, $s4, 1
+	j       main_create_gen_end_loop
 
 main_create_gen_end_loop_end:
-	addi $t0, $t0, 1
-	j main_create_big 
+	addi    $t0, $t0, 1
+	j       main_create_big 
 
 main_create_bigend:
 
@@ -458,51 +458,51 @@ main_create_bigend:
 #					- $t2: iterations
 #					- $t3: starting_col
 
-	lw $t7, NSCOLS
-	add $t2, $s1, $t7
-	sub $t3, $t7, 1
+	lw      $t7, NSCOLS
+	add     $t2, $s1, $t7
+	sub     $t3, $t7, 1
 
-	li $t0, 0
+	li      $t0, 0
 
 main_interations_start:
-	bge $t0, $t2, main_interations_end
+	bge     $t0, $t2, main_interations_end
 	nop
-	move $a0, $t3
-	move $a1, $s1
-	jal setUpDisplay	
+	move    $a0, $t3
+	move    $a1, $s1
+	jal     setUpDisplay	
 	nop
 
-	jal showDisplay
+	jal     showDisplay
 	nop
 	
-	sub $t3, $t3, 1
-	li $a0, 1
-	jal delay
+	sub     $t3, $t3, 1
+	li      $a0, 1
+	jal     delay
 	nop
 
-	addi $t0, $t0, 1
-	j main_interations_start
+	addi    $t0, $t0, 1
+	j       main_interations_start
 	nop
 
 main_interations_end:
 
-    move $v0, $0
+    move    $v0, $0
 
 ########################################################################
 
 main__post:
 	# tear down stack frame
-	lw  $s5, -20($fp)
-	lw  $s4, -24($fp)
-	lw  $s3, -20($fp)
-	lw	$s2, -16($fp)
-	lw	$s1, -12($fp)
-	lw	$s0, -8($fp)
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
-	nop	# in delay slot
+	lw      $s5, -20($fp)
+	lw      $s4, -24($fp)
+	lw      $s3, -20($fp)
+	lw	    $s2, -16($fp)
+	lw	    $s1, -12($fp)
+	lw	    $s0, -8($fp)
+	lw	    $ra, -4($fp)
+	la	    $sp, 4($fp)
+	lw	    $fp, ($fp)
+	jr	    $ra
+	nop	    # in delay slot
 
 # .TEXT <setUpDisplay>
 	.text
@@ -532,104 +532,104 @@ setUpDisplay:
 
 # Code:
 	# set up stack frame
-	sw	$fp, -4($sp)
-	la	$fp, -4($sp)
-	sw	$ra, -4($fp)
-	sw 	$s0, -8($fp)
-	sw 	$s1, -12($fp)
-	sw 	$s2, -16($fp)
-	sw 	$s3, -20($fp)
-	la	$sp, -24($fp)
+	sw	    $fp, -4($sp)
+	la	    $fp, -4($sp)
+	sw	    $ra, -4($fp)
+	sw 	    $s0, -8($fp)
+	sw 	    $s1, -12($fp)
+	sw  	$s2, -16($fp)
+	sw 	    $s3, -20($fp)
+	la	    $sp, -24($fp)
 
 	# ... TODO ...
 	# If starting < 0
-	li $s1, 0
+	li      $s1, 0
 
-	bge $a0, $zero, setUpDisplay_else
-	li $s1, 0
-	lw $s3, ($a0)
-	li $t0, -1
-	mul $s3, $s3, $t1
+	bge     $a0, $zero, setUpDisplay_else
+	li      $s1, 0
+	lw      $s3, ($a0)
+	li      $t0, -1
+	mul     $s3, $s3, $t1
 
 setUpDisplay_else:
-	bge $s1, $a1, setUpDisplay_space_else_end
-	li $s0, 0
+	bge     $s1, $a1, setUpDisplay_space_else_end
+	li      $s0, 0
 
 setUpDisplay_space_row_loop:
-	lw $t0, NROWS
-	bge $s0, $t0, setUpDisplay_space_row_loop_end
+	lw      $t0, NROWS
+	bge     $s0, $t0, setUpDisplay_space_row_loop_end
 
 	#Calculate the offset display[row][col] = ROWS * NROWS + OUTCOLS 
-	mul $t0, $t0, $s0
-	add $t0, $t0, $s1
-	la $t1, display
+	mul     $t0, $t0, $s0
+	add     $t0, $t0, $s1
+	la      $t1, display
 
-	add $t0, $t0, $t1
-	li $t1, ' '
-	sb $t1, ($t0)
+	add     $t0, $t0, $t1
+	li      $t1, ' '
+	sb      $t1, ($t0)
 
 setUpDisplay_space_row_loop_step:
-	addi $s0, 1
-	j setUpDisplay_space_row_loop
+	addi    $s0, 1
+	j       setUpDisplay_space_row_loop
 
 setUpDisplay_space_row_loop_end:
-	addi $s1, 1
-	j setUpDisplay_else
+	addi    $s1, 1
+	j       setUpDisplay_else
 
 setUpDisplay_space_else_end:
-	li $s3, 0
+	li      $s3, 0
 
 #Copy bigString into display
 setUpDisplay_bigstring: 
-	move $s2, $s3
-	bge $s2, $a1, setUpDisplay_bigstring_end
+	move    $s2, $s3
+	bge     $s2, $a1, setUpDisplay_bigstring_end
 	
-	lw $t1, NDCOLS
-	bge $s1, $t1, setUpDisplay_bigstring_end
-	li $s0, 0
+	lw      $t1, NDCOLS
+	bge     $s1, $t1, setUpDisplay_bigstring_end
+	li      $s0, 0
 
 setUpDisplay_bigstring_row:
-	lw $t0, NROWS 
-	bge $s0, $t0, setUpDisplay_bigstring_row_end
+	lw      $t0, NROWS 
+	bge     $s0, $t0, setUpDisplay_bigstring_row_end
 
 #Calculate offset in bigString = row*NSCOLS + in_col
-	lw $t0, NSCOLS
-	la $t1, bigString
-	mul $t7, $t0, $s0
-	add $t7, $t7, $s2
-	add $t7, $t7, $t1
-	lb $t7, ($t7)
+	lw      $t0, NSCOLS
+	la      $t1, bigString
+	mul     $t7, $t0, $s0
+	add     $t7, $t7, $s2
+	add     $t7, $t7, $t1
+	lb      $t7, ($t7)
 
 #Calculate offset in display = row*NDCOLS + out_col
-	lw $t0, NDCOLS
-	la $t1, display
-	mul $t6, $t0, $s0
-	add $t6, $t6, $s1
-	add $t6, $t6, $t1
-	sb $t7, ($t6)
+	lw      $t0, NDCOLS
+	la      $t1, display
+	mul     $t6, $t0, $s0
+	add     $t6, $t6, $s1
+	add     $t6, $t6, $t1
+	sb      $t7, ($t6)
 
 setUpDisplay_bigstring_row_step:
-	addi $s0, $s0, 1
-	j setUpDisplay_bigstring_row
+	addi    $s0, $s0, 1
+	j       setUpDisplay_bigstring_row
 
 setUpDisplay_bigstring_row_end:
-	addi $s1, $s1, 1
-	addi $s2, $s2, 1
+	addi    $s1, $s1, 1
+	addi    $s2, $s2, 1
 
-	j setUpDisplay_bigstring
+	j   setUpDisplay_bigstring
 
 setUpDisplay_bigstring_end:
 
 	# tear down stack frame
-	lw  $s3, -20($fp)
-	lw	$s2, -16($fp)
-	lw	$s1, -12($fp)
-	lw	$s0, -8($fp)
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
-	nop	# in delay slot
+	lw      $s3, -20($fp)
+	lw	    $s2, -16($fp)
+	lw	    $s1, -12($fp)
+	lw	    $s0, -8($fp)
+	lw	    $ra, -4($fp)
+	la	    $sp, 4($fp)
+	lw	    $fp, ($fp)
+	jr	    $ra
+	nop	    # in delay slot
 
 ########################################################################
 # .TEXT <showDisplay>
@@ -657,46 +657,46 @@ showDisplay:
 
 # Code:
 	# set up stack frame
-	sw	$fp, -4($sp)
-	la	$fp, -4($sp)
-	sw	$ra, -4($fp)
-	sw 	$s0, -8($fp)
-	sw 	$s1, -12($fp)
-	sw 	$s2, -16($fp)
-	la	$sp, -20($fp)  #%%
+	sw	    $fp, -4($sp)
+	la	    $fp, -4($sp)
+	sw	    $ra, -4($fp)
+	sw  	$s0, -8($fp)
+	sw 	    $s1, -12($fp)
+	sw 	    $s2, -16($fp)
+	la	    $sp, -20($fp)  #%%
 
-	la	$a0, CLEAR
-	li	$v0, 4 
+	la	    $a0, CLEAR
+	li	    $v0, 4 
 	syscall
 
-	li $s0, 1
+	li      $s0, 1
 showDisplay_rows: #%%
-	lw $t1, NROWS
-	bge $s0, $t1, showDisplay_rows_end
-	li $s1, 0
+	lw      $t1, NROWS
+	bge     $s0, $t1, showDisplay_rows_end
+	li      $s1, 0
 
 showDisplay_cols:
-	lw $t0, NDCOLS
-	bge $s1, $t1, showDisplay_cols
+	lw      $t0, NDCOLS
+	bge     $s1, $t1, showDisplay_cols
 
 	#calculate offset display[i][j] = i * NDCOLS + j
-	mul $t0, $t0, $s0
-	add $t0, $t0, $s1
-	lw $t1, display
-	add $t0, $t1, $t0
-	lw $a0, ($t0)
-	li $v0, 11
+	mul     $t0, $t0, $s0
+	add     $t0, $t0, $s1
+	lw      $t1, display
+	add     $t0, $t1, $t0
+	lw      $a0, ($t0)
+	li      $v0, 11
 	syscall
 
 showDisplay_cols_step:
-	addi $s1, $s1, 1
-	j showDisplay_rows
+	addi    $s1, $s1, 1
+	j       showDisplay_rows
 	nop
 
 showDisplay_cols_end:
-	addi $s0, $s0, 1
-	li $a0, '\n'
-	li $v0, 4
+	addi    $s0, $s0, 1
+	li      $a0, '\n'
+	li      $v0, 4
 	syscall
 
 	j showDisplay_rows
@@ -704,13 +704,13 @@ showDisplay_cols_end:
 
 showDisplay_rows_end:
 	# tear down stack frame %%
-	lw	$s2, -16($fp)
-	lw	$s1, -12($fp)
-	lw	$s0, -8($fp)
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
+	lw	    $s2, -16($fp)
+	lw	    $s1, -12($fp)
+	lw	    $s0, -8($fp)
+	lw	    $ra, -4($fp)
+	la	    $sp, 4($fp)
+	lw	    $fp, ($fp)
+	jr	    $ra
 	nop	# in delay slot
 
 ########################################################################
@@ -747,40 +747,40 @@ delay:
 #	-> [epilogue]
 
 # Code:
-	sw	$fp, -4($sp)
-	la	$fp, -4($sp)
-	sw	$ra, -4($fp)
-	la	$sp, -8($fp)
+	sw	    $fp, -4($sp)
+	la	    $fp, -4($sp)
+	sw	    $ra, -4($fp)
+	la	    $sp, -8($fp)
 
 	# x <- 0
 	move	$t0, $zero
 	# These values control the busy-wait.
-	li	$t4, 20000
-	li	$t5, 1000
+	li	    $t4, 20000
+	li	    $t5, 1000
 
 delay_i_init:
 	# i = 0;
 	move	$t1, $zero
 delay_i_cond:
 	# i < n;
-	bge	$t1, $a0, delay_i_f
-	nop	# in delay slot
+	bge	    $t1, $a0, delay_i_f
+	nop	    # in delay slot
 
 delay_j_init:
 	# j = 0;
 	move	$t2, $zero
 delay_j_cond:
 	# j < DELAY_J;
-	bge	$t2, $t4, delay_j_f
-	nop	# in delay slot
+	bge	    $t2, $t4, delay_j_f
+	nop	    # in delay slot
 
 delay_k_init:
 	# k = 0;
 	move	$t3, $zero
 delay_k_cond:
 	# k < DELAY_K;
-	bge	$t3, $t5, delay_k_f
-	nop	# in delay slot
+	bge	    $t3, $t5, delay_k_f
+	nop	    # in delay slot
 
 	# x = x + 1
 	addi	$t0, $t0, 1
@@ -788,31 +788,31 @@ delay_k_cond:
 delay_k_step:
 	# k = k + 1
 	addi	$t3, $t3, 1
-	j	delay_k_cond
-	nop	# in delay slot
+	j	    delay_k_cond
+	nop	    # in delay slot
 delay_k_f:
 
 delay_j_step:
 	# j = j + 1
 	addi	$t2, $t2, 1
-	j	delay_j_cond
-	nop	# in delay slot
+	j	    delay_j_cond
+	nop	    # in delay slot
 delay_j_f:
 
 delay_i_step:
 	# i = i + 1
 	addi	$t1, $t1, 1
-	j	delay_i_cond
-	nop	# in delay slot
+	j	    delay_i_cond
+	nop	    # in delay slot
 delay_i_f:
 
 delay__post:
 	# tear down stack frame
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
-	nop	# in delay slot
+	lw	    $ra, -4($fp)
+	la	    $sp, 4($fp)
+	lw	    $fp, ($fp)
+	jr	    $ra
+	nop	    # in delay slot
 
 ########################################################################
 # .TEXT <isUpper>
@@ -832,49 +832,45 @@ isUpper:
 #	-> [epilogue]
 
 # Code:
-	# set up stack frame
+	
 	# ... TODO ...
-# set up stack frame
-	sw	$fp, -4($sp)
-	la	$fp, -4($sp)
-	sw	$ra, -4($fp)
-	la	$sp, -8($fp)
+    # set up stack frame
+	sw	    $fp, -4($sp)
+	la	    $fp, -4($sp)
+	sw	    $ra, -4($fp)
+	la	    $sp, -8($fp)
 
 	# if (ch >= 'A')
-	li	$v0, 'A'
-	blt	$a0, $v0, isUpper_ch_lt_a
-	nop	# in delay slot
+	li	    $v0, 'A'
+	blt	    $a0, $v0, isUpper_ch_lt_a
+	nop	    # in delay slot
 isUpper_ch_ge_a:
 	# if (ch <= 'Z')
-	li	$v0, 'Z'
-	bgt	$a0, $v0, isUpper_ch_gt_z
-	nop	# in delay slot
+	li	    $v0, 'Z'
+	bgt	    $a0, $v0, isUpper_ch_gt_z
+	nop	    # in delay slot
 isUpper_ch_le_z:
 	addi	$v0, $zero, 1
-	j	isUpper_ch_phi
-	nop	# in delay slot
+	j	    isUpper_ch_phi
+	nop	    # in delay slot
 
 	# ... else
 isUpper_ch_lt_a:
+
 isUpper_ch_gt_z:
 	move	$v0, $zero
-	j isUpper__post
+	j       isUpper__post
 	# fallthrough
+
 isUpper_ch_phi:
 
 isUpper__post:
 	# tear down stack frame
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-
-
-
-
-	# tear down stack frame
-	jr	$ra
-	nop	# in delay slot
-
+	lw      $ra, -4($fp)
+	la	    $sp, 4($fp)
+	lw	    $fp, ($fp)
+	jr	    $ra
+	nop	    # in delay slot
 ########################################################################
 # .TEXT <isLower>
 	.text
@@ -901,36 +897,33 @@ isLower:
 
 # Code:
 	# set up stack frame
-	sw	$fp, -4($sp)
-	la	$fp, -4($sp)
-	sw	$ra, -4($fp)
-	la	$sp, -8($fp)
+	sw	    $fp, -4($sp)
+	la	    $fp, -4($sp)
+	sw	    $ra, -4($fp)
+	la	    $sp, -8($fp)
 
 	# if (ch >= 'a')
-	li	$v0, 'a'
-	blt	$a0, $v0, isLower_ch_lt_a
-	nop	# in delay slot
+	li	    $v0, 'a'
+	blt	    $a0, $v0, isLower_ch_lt_a
+	nop	    # in delay slot
 
 isLower_ch_ge_a:
 	# if (ch <= 'z')
-	li	$v0, 'z'
-	bgt	$a0, $v0, isLower_ch_gt_z
-	nop	# in delay slot
+	li	    $v0, 'z'
+	bgt	    $a0, $v0, isLower_ch_gt_z
+	nop	    # in delay slot
 
 isLower_ch_le_z:
 	addi	$v0, $zero, 1
-	j	isLower_ch_phi
-	nop	# in delay slot
+	j	    isLower_ch_phi
+	nop	    # in delay slot
 
 	# ... else
 isLower_ch_lt_a:
-	li $v0, 0
-	j isLower__post
-	nop
 
 isLower_ch_gt_z:
 	move	$v0, $zero
-	j isLower__post
+	j       isLower__post
 	nop
 
 	# fallthrough
@@ -938,10 +931,10 @@ isLower_ch_phi:
 
 isLower__post:
 	# tear down stack frame
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
-	nop	# in delay slot
+	lw	    $ra, -4($fp)
+	la	    $sp, 4($fp)
+	lw	    $fp, ($fp)
+	jr	    $ra
+	nop	    # in delay slot
 
 #################################################################### EOF
