@@ -1108,12 +1108,12 @@ setUpDisplay:
 	# ... TODO ...
 	# If starting < 0
 	li      $s1, 0
-  
+
 	bge     $a0, $zero, setUpDisplay_else
 	li      $s1, 0
 	move    $s3, $a0
 	li      $t0, -1
-	mul     $s3, $s3, $t1
+	mul     $s3, $s3, $t0
     j       setupUpDisplay_bigstring_bridge
     nop
     
