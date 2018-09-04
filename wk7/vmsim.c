@@ -142,7 +142,7 @@ int physicalAddress(uint vAddr, char action)
 			int i = 0;
 			int least_used_page = 0;
 
-			while (i < nPages) {
+			while (i <= nPages) {
 				if 	(PageTable[least_used_page].lastAccessed > PageTable[i].lastAccessed){
 					least_used_page = i;
 				}
