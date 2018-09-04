@@ -108,7 +108,66 @@ int main (int argc, char **argv)
 int physicalAddress(uint vAddr, char action)
 {
    // TODO: write this function
-   return -1; // replace this line
+	int physicalAddress = -1;
+	int page_no = vAddr/PAGESIZE;
+	int page_offset = vAddr % PAGESIZE;
+
+	if (page_no < 0 || page_no > page_no)  {
+		return -1;
+	}
+
+	if (PageTable[page_no].status == Loaded) {
+		if (action == 'W'){
+			PageTable[page_no].status = Modified;
+			PageTable[page_no].lastAccessed = clock;
+			physicalAddress = PAGESIZE* PageTable[page_no].frameNo + page_offset;
+		}
+	} else {
+		int i = 0;
+		int unused = nFrames;
+		// Look for unused frame
+		while (i < nFrames){	
+			if (MemFrames[i] == -1) {
+				unused = i;
+			}
+			i++;
+		}
+		
+		if (unused < nFrames){
+			MemFrames[unused] = page_no;
+			physicalAddress = unused * PAGESIZE + page_offset;
+		
+		} else {
+			nReplaces++;
+			i = 0;
+			int least_used_pos = 0;
+
+			while (i < nPages) {
+				if 	(PageTable[least_used_pos].clock > PageTable[i].clock){
+					least_used_pos = i;
+				}
+
+				i++;	
+			}
+
+			if(PageTable[least_used_pos].status == Modified) {
+				nSaves++;
+			}
+
+			unused = PageTable[least_used_pos].frameNo;
+			PageTable[least_used_pos].status = NotLoaded;
+			PageTable[least_used_pos].frameNo = NotLoaded;
+			PageTable[least_used_pos].lastAccessed = -1;
+		}
+
+		nLoads++;
+		PageTable[least_used_pos].status = Loaded;
+		PageTable[least_used_pos].frameNo = unused;
+		PageTable[least_used_pos].lastAccessed = clock;	
+
+		physicalAddress = unused * PAGESIZE + page_offset;
+
+   return physicalAddress; // replace this line
 }
 
 // allocate and initialise Page Table
