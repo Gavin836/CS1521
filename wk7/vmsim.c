@@ -149,7 +149,7 @@ int physicalAddress(uint vAddr, char action)
 				i++;	
 			}
 
-			if (PageTable[least_used_page].status == Modified) {
+			if (PageTable[page_no].status == Modified) {
 				nSaves++;
 			}
 			free_frame = PageTable[least_used_page].frameNo;
