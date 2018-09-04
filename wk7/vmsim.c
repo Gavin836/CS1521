@@ -112,7 +112,7 @@ int physicalAddress(uint vAddr, char action)
 	int page_no = vAddr / PAGESIZE;
 	int page_offset = vAddr % PAGESIZE;
 	
-	if (page_no < 0 || page_no > nPages)  {
+	if (page_no < 0 || page_no >= nPages)  {
 		return -1;
 	}
 
