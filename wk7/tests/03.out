@@ -1,0 +1,46 @@
+
+@ t=0, read from pA=9192 (vA=1000)
+
+PageTable (Stat,Acc,Frame)
+[ 0]  L,  0,  2 @ 8192
+[ 1]  -, -1, -1
+[ 2]  -, -1, -1
+MemFrames
+[ 0] -1 @ 0
+[ 1] -1 @ 4096
+[ 2]  0 @ 8192
+
+@ t=1, write to pA=11192 (vA=3000)
+
+PageTable (Stat,Acc,Frame)
+[ 0]  M,  1,  2 @ 8192
+[ 1]  -, -1, -1
+[ 2]  -, -1, -1
+MemFrames
+[ 0] -1 @ 0
+[ 1] -1 @ 4096
+[ 2]  0 @ 8192
+
+@ t=2, read from pA=5000 (vA=5000)
+
+PageTable (Stat,Acc,Frame)
+[ 0]  L,  2,  1 @ 4096
+[ 1]  -, -1, -1
+[ 2]  -, -1, -1
+MemFrames
+[ 0] -1 @ 0
+[ 1]  1 @ 4096
+[ 2]  0 @ 8192
+
+@ t=3, write to pA=2904 (vA=7000)
+
+PageTable (Stat,Acc,Frame)
+[ 0]  L,  3,  0 @ 0
+[ 1]  -, -1, -1
+[ 2]  -, -1, -1
+MemFrames
+[ 0]  1 @ 0
+[ 1]  1 @ 4096
+[ 2]  0 @ 8192
+
+Invalid address 9000

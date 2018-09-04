@@ -111,8 +111,8 @@ int physicalAddress(uint vAddr, char action)
 	int physicalAddress = -1;
 	int page_no = vAddr/PAGESIZE;
 	int page_offset = vAddr % PAGESIZE;
-
-	if (page_no < 0 || page_no > page_no)  {
+    int least_used_pos = 0;
+	if (page_no < 0 || page_no > nPages)  {
 		return -1;
 	}
 
@@ -140,10 +140,9 @@ int physicalAddress(uint vAddr, char action)
 		} else {
 			nReplaces++;
 			i = 0;
-			int least_used_pos = 0;
 
 			while (i < nPages) {
-				if 	(PageTable[least_used_pos].clock > PageTable[i].clock){
+				if 	(PageTable[least_used_pos].lastAccessed > PageTable[i].lastAccessed){
 					least_used_pos = i;
 				}
 
@@ -166,7 +165,7 @@ int physicalAddress(uint vAddr, char action)
 		PageTable[least_used_pos].lastAccessed = clock;	
 
 		physicalAddress = unused * PAGESIZE + page_offset;
-
+    }
    return physicalAddress; // replace this line
 }
 
