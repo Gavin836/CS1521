@@ -116,7 +116,7 @@ int physicalAddress(uint vAddr, char action)
 		return -1;
 	}
 
-	if (PageTable[page_no].frame != -1) {
+	if (PageTable[page_no].frameNo != -1) {
 		if (action == 'W'){
 			PageTable[page_no].status = Modified;
 		}
@@ -130,7 +130,7 @@ int physicalAddress(uint vAddr, char action)
 			if (MemFrames[free_frame] == -1) {
 				break;
 			}
-			i++;
+			free_frame++;
 		}
 		
 		if (free_frame < nFrames){
@@ -157,7 +157,7 @@ int physicalAddress(uint vAddr, char action)
 			PageTable[least_used_page].status = NotLoaded;
 			PageTable[least_used_page].frameNo = NotLoaded;
 			PageTable[least_used_page].lastAccessed = -1;
-			PageTable[least_used_page] = free_frame;
+			PageTable[least_used_page].frameNo = free_frame;
 			MemFrames[free_frame] = least_used_page;
 		}
 
@@ -169,9 +169,7 @@ int physicalAddress(uint vAddr, char action)
 			PageTable[least_used_page].status = Modified;
 		}
 
-		PageTable[least_used_page].frameNo = free_frame;
 		PageTable[least_used_page].lastAccessed = clock;	
-
 		physicalAddress = PageTable[free_frame] * PAGESIZE + page_offset;
     }
    return physicalAddress; // replace this line
