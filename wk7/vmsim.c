@@ -155,6 +155,8 @@ int physicalAddress(uint vAddr, char action)
 			PageTable[least_used_pos].status = NotLoaded;
 			PageTable[least_used_pos].frameNo = NotLoaded;
 			PageTable[least_used_pos].lastAccessed = -1;
+			PageTable[least_used_pos] = unused;
+			MemFrames[unused] = least_used_pos;
 		}
 
 		nLoads++;
@@ -168,7 +170,7 @@ int physicalAddress(uint vAddr, char action)
 		PageTable[least_used_pos].frameNo = unused;
 		PageTable[least_used_pos].lastAccessed = clock;	
 
-		physicalAddress = unused * PAGESIZE + page_offset;
+		physicalAddress = PageTable[unused] * PAGESIZE + page_offset;
     }
    return physicalAddress; // replace this line
 }
