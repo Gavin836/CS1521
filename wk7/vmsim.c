@@ -109,7 +109,7 @@ int physicalAddress(uint vAddr, char action)
 {
    // TODO: write this function
 	int physicalAddress = -1;
-	int page_no = vAddr/PAGESIZE;
+	int page_no = vAddr / PAGESIZE;
 	int page_offset = vAddr % PAGESIZE;
 	
 	if (page_no < 0 || page_no > nPages)  {
@@ -152,25 +152,24 @@ int physicalAddress(uint vAddr, char action)
 			if (PageTable[least_used_page].status == Modified) {
 				nSaves++;
 			}
-
 			free_frame = PageTable[least_used_page].frameNo;
-			PageTable[least_used_page].status = NotLoaded;
-			PageTable[least_used_page].frameNo = NotLoaded;
-			PageTable[least_used_page].lastAccessed = -1;
-			PageTable[least_used_page].frameNo = free_frame;
-			MemFrames[free_frame] = least_used_page;
+			PageTable[page_no].status = NotLoaded;
+			PageTable[page_no].frameNo = NotLoaded;
+			PageTable[page_no].lastAccessed = -1;
+			PageTable[page_no].frameNo = free_frame;
+			MemFrames[free_frame] = page_no;
 		}
 
 		nLoads++;
 		if (action == 'R') {
-			PageTable[least_used_page].status = Loaded;
+			PageTable[page_no].status = Loaded;
 		
 		} else {
-			PageTable[least_used_page].status = Modified;
+			PageTable[page_no].status = Modified;
 		}
 
-		PageTable[least_used_page].lastAccessed = clock;	
-		physicalAddress = PageTable[free_frame] * PAGESIZE + page_offset;
+		PageTable[page_no].lastAccessed = clock;	
+		physicalAddress = PageTable[page_no].frameNo * PAGESIZE + page_offset;
     }
    return physicalAddress; // replace this line
 }
