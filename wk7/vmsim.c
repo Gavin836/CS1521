@@ -111,7 +111,7 @@ int physicalAddress(uint vAddr, char action)
 	int physicalAddress = -1;
 	int page_no = vAddr/PAGESIZE;
 	int page_offset = vAddr % PAGESIZE;
-    int least_used_pos = 0;
+	
 	if (page_no < 0 || page_no > nPages)  {
 		return -1;
 	}
@@ -122,55 +122,57 @@ int physicalAddress(uint vAddr, char action)
 		}
 			PageTable[page_no].lastAccessed = clock;
 			physicalAddress = PAGESIZE* PageTable[page_no].frameNo + page_offset;
+	
 	} else {
-		int i = 0;
-		int unused = nFrames;
-		// Look for unused frame
-		while (i < nFrames){	
-			if (MemFrames[i] == -1) {
-				unused = i;
+		int free_frame = 0;
+		// Look for free_frame frame
+		while (free_frame < nFrames){	
+			if (MemFrames[free_frame] == -1) {
+				break;
 			}
 			i++;
 		}
 		
-		if (unused < nFrames){
-			MemFrames[unused] = page_no;
-			PageTable[page_no] = unused;		
+		if (free_frame < nFrames){
+			MemFrames[free_frame] = page_no;
+			PageTable[page_no].frameNo = free_frame;		
+		
 		} else {
 			nReplaces++;
-			i = 0;
+			int i = 0;
+			int least_used_page = 0;
 
 			while (i < nPages) {
-				if 	(PageTable[least_used_pos].lastAccessed > PageTable[i].lastAccessed){
-					least_used_pos = i;
+				if 	(PageTable[least_used_page].lastAccessed > PageTable[i].lastAccessed){
+					least_used_page = i;
 				}
 				i++;	
 			}
 
-			if(PageTable[least_used_pos].status == Modified) {
+			if (PageTable[least_used_page].status == Modified) {
 				nSaves++;
 			}
 
-			unused = PageTable[least_used_pos].frameNo;
-			PageTable[least_used_pos].status = NotLoaded;
-			PageTable[least_used_pos].frameNo = NotLoaded;
-			PageTable[least_used_pos].lastAccessed = -1;
-			PageTable[least_used_pos] = unused;
-			MemFrames[unused] = least_used_pos;
+			free_frame = PageTable[least_used_page].frameNo;
+			PageTable[least_used_page].status = NotLoaded;
+			PageTable[least_used_page].frameNo = NotLoaded;
+			PageTable[least_used_page].lastAccessed = -1;
+			PageTable[least_used_page] = free_frame;
+			MemFrames[free_frame] = least_used_page;
 		}
 
 		nLoads++;
 		if (action == 'R') {
-			PageTable[least_used_pos].status = Loaded;
+			PageTable[least_used_page].status = Loaded;
 		
 		} else {
-			PageTable[least_used_pos].status = Modified;
+			PageTable[least_used_page].status = Modified;
 		}
 
-		PageTable[least_used_pos].frameNo = unused;
-		PageTable[least_used_pos].lastAccessed = clock;	
+		PageTable[least_used_page].frameNo = free_frame;
+		PageTable[least_used_page].lastAccessed = clock;	
 
-		physicalAddress = PageTable[unused] * PAGESIZE + page_offset;
+		physicalAddress = PageTable[free_frame] * PAGESIZE + page_offset;
     }
    return physicalAddress; // replace this line
 }
