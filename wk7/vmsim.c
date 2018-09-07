@@ -112,7 +112,7 @@ int physicalAddress(uint vAddr, char action)
 	int page_no = vAddr / PAGESIZE;
 	int page_offset = vAddr % PAGESIZE;
 	
-	if (page_no < 0 || page_no > nPages)  {
+	if (page_no < 0 || page_no >= nPages)  {
 		return -1;
 	}
 
@@ -125,7 +125,10 @@ int physicalAddress(uint vAddr, char action)
 	
 	} else {
 		int free_frame = 0;
-		// Look for free_frame frame
+		int i = 0;
+		int least_used_page = 0;
+
+		// Look for free_frame in memory.
 		while (free_frame < nFrames){	
 			if (MemFrames[free_frame] == -1) {
 				break;
@@ -138,24 +141,25 @@ int physicalAddress(uint vAddr, char action)
 			PageTable[page_no].frameNo = free_frame;		
 		
 		} else {
+			
+			int oldest_tick = clock;
 			nReplaces++;
-			int i = 0;
-			int least_used_page = 0;
-
-			while (i <= nPages) {
-				if 	(PageTable[least_used_page].lastAccessed > PageTable[i].lastAccessed){
+			while (i < nPages) {
+				if 	(PageTable[i].lastAccessed < oldest_tick && PageTable[i].lastAccessed >= 0) {
+					oldest_tick = PageTable[i].lastAccessed;
 					least_used_page = i;
 				}
 				i++;	
 			}
 
-			if (PageTable[page_no].status == Modified) {
+			if (PageTable[least_used_page].status == Modified) {
 				nSaves++;
 			}
+			
 			free_frame = PageTable[least_used_page].frameNo;
-			PageTable[page_no].status = NotLoaded;
-			PageTable[page_no].frameNo = NotLoaded;
-			PageTable[page_no].lastAccessed = -1;
+			PageTable[least_used_page].status = NotLoaded;
+			PageTable[least_used_page].frameNo = -1;
+			PageTable[least_used_page].lastAccessed = -1;
 			PageTable[page_no].frameNo = free_frame;
 			MemFrames[free_frame] = page_no;
 		}
@@ -170,6 +174,8 @@ int physicalAddress(uint vAddr, char action)
 
 		PageTable[page_no].lastAccessed = clock;	
 		physicalAddress = PageTable[page_no].frameNo * PAGESIZE + page_offset;
+		
+		//printf("The add is %d, unused is %d, frame_no is %d, least used is %d\n", physicalAddress, free_frame, PageTable[page_no].frameNo, least_used_page);
     }
    return physicalAddress; // replace this line
 }

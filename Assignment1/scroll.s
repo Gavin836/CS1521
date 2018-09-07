@@ -71,21 +71,20 @@ bigString:	.space	81000	# NROWS * NSCOLS
 	.text
 main:
 
-# Frame:	$fp, $ra, $s0, $s1, $s2, $s3, $s4, $s5
-# Uses:		$a0, $a1, $t0, $t1, $t2, $s0, $s1
+# Frame:	$fp, $ra, $s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7
+# Uses:		$a0, $a1, $t0, $t1, $t2, $s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7
 # Clobbers:	...
 
 # Locals:
 #	- `theLength' in $s0
 #	- `bigLength' in $s1
+#	- `i' in $s2
 #	- `ch' in $s3
 #	- `str' in $t2
-#	- `i' in $t0
-#	- `j' in $t1
 #	- `row' in $s4
 #	- `col' in $s5
-#	- `iterations' in $...
-#	- `startingCol' in $...
+#	- `iterations' in $s6
+#	- `startingCol' in $s7
 
 # Structure:
 #	main
@@ -117,8 +116,9 @@ main:
 	sw  $s3, -20($fp)
 	sw  $s4, -24($fp)
 	sw  $s5, -28($fp)
-
-	addi	$sp, $sp, -32
+    sw  $s6, -32($fp)
+    sw  $s7, -36($fp)
+	addi	$sp, $sp, -40
 
 	# if (argc < 2)
 	li	$t0, 2
@@ -265,15 +265,15 @@ main_theLength_ge_1:
 # Common registers:
 #           - $s0: rows
 #           - $s1: col
-#			- t0: i
+#			- s2: i
 #			- t1: j
 
-    li      $t0, 0            
+    li      $s2, 0            
 
 main_init_spaces_row:
 	la      $t7, NROWS
 	lw 		$t7, ($t7)
-	bge     $t0, $t7, main_init_spaces_row_end
+	bge     $s2, $t7, main_init_spaces_row_end
 	nop
 	li      $t1, 0                      
 
@@ -284,7 +284,7 @@ main_init_spaces_col:
 	nop
 
 	#display[i][j] = i * NDCOLS + j
-	mul     $t2, $t2, $t0
+	mul     $t2, $t2, $s2
 	add     $t2, $t2, $t1
 	la      $t3, display
 	add     $t2, $t2, $t3
@@ -298,7 +298,7 @@ main_init_spaces_skip:
 	nop
 
 main_init_spaces_col_end:
-	addi    $t0, $t0, 1
+	addi    $s2, $s2, 1
 	j       main_init_spaces_row
 	nop
 
@@ -307,22 +307,22 @@ main_init_spaces_row_end:
 # Bigchars array
 
 # Common Registers:
-#					-t0: i counter
+#					-s2: i counter
 #					-t1: j counter 
 #					-s4: rows
 #					-s5: cols
 
-	li $t0, 0                        
+	li $s2, 0                        
 
 main_create_big:
-	bge     $t0, $s0, main_create_bigend
+	bge     $s2, $s0, main_create_bigend
 	nop
 	li      $s4, 0
 	li      $s5, 0
 	
 	#ch = theString[i]
 	la      $t2, theString
-	add     $t2, $t2, $t0
+	add     $t2, $t2, $s2
 	lb      $s3, ($t2)
 
 	#Determine which hash matrix to store
@@ -348,14 +348,14 @@ main_create_big:
 main_create_upper:
     # which = ch - 'A'
     li      $t3, 'A'
-	sub     $t2, $s3, $t3
+	sub     $s3, $s3, $t3
 	j       main_create_letter
 
 main_create_lower:
     # which = ch - 'a' + 26
     li      $t3, 'a'
 	sub     $t2, $s3, $t3
-	addi    $t2, $t2, 26
+	addi    $s3, $t2, 26
 
 main_create_letter:
 	la      $t3, CHRSIZE
@@ -371,7 +371,7 @@ main_create_letter_loop:
 
 	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
 	addi    $t3, $t3, 1
-	mul     $t3, $t3, $t0
+	mul     $t3, $t3, $s2
 	add     $t3, $t3, $s5
 	la      $t4, NSCOLS
 	lw 		$t4, ($t4)
@@ -386,7 +386,7 @@ main_create_letter_loop:
 	mul     $t4, $s4, $t7
 	add     $t4, $t4, $s5
 	mul     $t7, $t7, $t7
-	mul     $t2, $t2, $t7
+	mul     $t2, $s3, $t7
 
 	add     $t2, $t2, $t4
 	la      $t4, all_chars
@@ -418,7 +418,7 @@ main_create_big_spaces_loop:
 
 	#Calculate offset in bigString = row * NSCOLS + col + i * (CHRSIZE+1)
 	addi    $t2, $t2, 1
-	mul     $t2, $t2, $t0
+	mul     $t2, $t2, $s2
 	add     $t2, $t2, $s5
 	la      $t3, NSCOLS
 	lw 		$t3, ($t3)
@@ -446,7 +446,7 @@ main_create_gen_end:
 	la      $t7, CHRSIZE
 	lw 		$t7, ($t7)
 	addi    $t2, $t7, 1
-	mul     $t2, $t2, $t0
+	mul     $t2, $t2, $s2
 	add     $t2, $t2, $t7
 	move    $s5, $t2
 	li      $s4, 0
@@ -468,7 +468,7 @@ main_create_gen_end_loop:
 	j       main_create_gen_end_loop
 
 main_create_gen_end_loop_end:
-	addi    $t0, $t0, 1
+	addi    $s2, $s2, 1
 	j       main_create_big 
 
 main_create_bigend:
@@ -476,21 +476,23 @@ main_create_bigend:
 #####################################################################
 #INTERATIONS
 #Common registers:
-#					- $t2: iterations
-#					- $t3: starting_col
+#                   - $s2: i
+#					- $s6: iterations
+#					- $s7: starting_col
+
     # iterations = NDCOLS+bigLength
 	la      $t7, NDCOLS
 	lw 		$t7, ($t7)
-	add     $t2, $s1, $t7
+	add     $s6, $s1, $t7
 	# starting_col = NDCOLS-1
-	sub     $t3, $t7, 1
+	sub     $s7, $t7, 1
 
-	li      $t0, 0
+	li      $s2, 0
 
 main_interations_start:
-	bge     $t0, $t2, main_interations_end
+	bge     $s2, $s6, main_interations_end
 	nop
-	move    $a0, $t3
+	move    $a0, $s7
 	move    $a1, $s1
 	jal     setUpDisplay	
 	nop
@@ -498,12 +500,12 @@ main_interations_start:
 	jal     showDisplay
 	nop
 	
-	sub     $t3, $t3, 1
+	sub     $s7, $s7, 1
 	li      $a0, 1
 	#jal     delay
 	nop
 
-	addi    $t0, $t0, 1
+	addi    $s2, $s2, 1
 	j       main_interations_start
 	nop
 
@@ -515,6 +517,8 @@ main_interations_end:
 
 main__post:
 	# tear down stack frame
+	lw      $s7, -36($fp)
+	lw      $s6, -32($fp)
 	lw      $s5, -28($fp)
 	lw      $s4, -24($fp)
 	lw      $s3, -20($fp)
@@ -579,7 +583,7 @@ setUpDisplay:
     
 setUpDisplay_else:
     move    $s3, $a0
-	bge     $s1, $a1, setUpDisplay_space_else_end 
+	bge     $s1, $s3, setUpDisplay_space_else_end 
 	nop         
 	li      $s0, 0
 
