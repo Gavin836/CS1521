@@ -112,7 +112,7 @@ int physicalAddress(uint vAddr, char action)
 	int page_no = vAddr / PAGESIZE;
 	int page_offset = vAddr % PAGESIZE;
 	
-	if (page_no < 0 || page_no > nPages)  {
+	if (page_no < 0 || page_no >= nPages)  {
 		return -1;
 	}
 
@@ -142,7 +142,7 @@ int physicalAddress(uint vAddr, char action)
 			int i = 0;
 			int least_used_page = 0;
 
-			while (i <= nPages) {
+			while (i < nPages) {
 				if 	(PageTable[least_used_page].lastAccessed > PageTable[i].lastAccessed){
 					least_used_page = i;
 				}
@@ -170,6 +170,7 @@ int physicalAddress(uint vAddr, char action)
 
 		PageTable[page_no].lastAccessed = clock;	
 		physicalAddress = PageTable[page_no].frameNo * PAGESIZE + page_offset;
+		printf("Phys address is %d, physicalAddress");
     }
    return physicalAddress; // replace this line
 }
