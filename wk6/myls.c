@@ -16,7 +16,7 @@
 #define MAXFNAME   200
 #define MAXNAME    20
 
-char *rwxmode(mode_t, char *);
+char *rwxmode(mode_t, char *); 
 char *username(uid_t, char *);
 char *groupname(gid_t, char *);
 
