@@ -2,7 +2,7 @@
 
 CC=gcc
 #CFLAGS=-std=c99 -Wall -Werror
-CFLAGS=-std=c99 -Wall -Werror -DDBUG
+CFLAGS=-std=c99 -Wall -Werror -g -DDBUG
 
 mysh : mysh.c
 

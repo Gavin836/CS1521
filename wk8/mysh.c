@@ -13,6 +13,9 @@
 #include <unistd.h>
 #include <assert.h>
 
+#define TRUE 1
+#define FALSE 0
+
 // this next line may not be needed on you machine
 // comment it out if it generates an error
 extern char *strdup(char *);
@@ -68,8 +71,8 @@ int main(int argc, char *argv[], char *envp[])
         } else {
         	wait(NULL);
         	freeTokens(command);
+        	freeTokens(path);
         }
-
 
         printf("mysh$ ");
     }
@@ -80,7 +83,47 @@ int main(int argc, char *argv[], char *envp[])
 // execute: run a program, given command-line args, path and envp
 void execute(char **args, char **path, char **envp)
 {
+    char *command = 0;
+    int file_exist = FALSE;
+    char full_path[1000] = {0};
+    
     // TODO: implement the find-the-executable and execve() it code
+   
+    if (args[0][0] == '/' || args[0][0] == '.') {
+        if (isExecutable(args[0]) == 1) {
+            command = args[0];
+            file_exist = TRUE;
+            strcpy(full_path, args[0]);
+        }       
+
+    } else { 
+        int i;
+
+        for (i = 0; path[i] != NULL; i ++) {
+            strcpy(full_path, path[i]);
+            strcat(full_path, "/");
+            strcat(full_path, args[0]);
+            
+            
+            if(isExecutable(full_path) == 1) {
+                file_exist = TRUE;
+                command = full_path;
+                break;
+            }
+        }
+    }
+    
+    if (file_exist == FALSE) {
+        printf("Command not found\n");
+  
+    } else {
+        printf("%s", command);
+        execve(command, args, envp);
+        
+        perror("Exec failed\n");
+    }
+    
+    
 }
 
 // isExecutable: check whether this process can execute a file
