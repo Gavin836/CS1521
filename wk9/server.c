@@ -78,12 +78,23 @@ void send_root(int fd)
 }
 
 // Send a /date endpoint response
-void send_date(int fd)
+char *send_date(int fd, char *buffer)
 {
     // TODO
-    int time = time();
-    char *date = ctime(time);
-    puts(date);
+    char date_response[1000];
+    
+    time_t curr_time;
+    time(&curr_time);
+    
+    strcpy(date_response, "<h1>");
+    strcat(date_response, ctime(&curr_time));
+    strcat(date_response, "</h1>");
+    
+    send_response(fd, "HTTP/1.1 Date file",
+                      "text/html",
+                       date_response);
+
+    return ctime(&curr_time);
 }
 
 // Send a /date endpoint response
@@ -92,13 +103,16 @@ void send_hello(int fd, char *req)
     // TODO
     char response[1000];
     strcat(response,"<h1>HELLOOOO</h1>");
-    strcat(response, "<p>");
-    strcat(response, req);
-    strcat(response, "</p>");
-
+    
+    if (req != NULL) {
+        strcat(response, "<p>");
+        strcat(response, req);
+        strcat(response, "</p>");
+    }
+    
     send_response(fd, "HTTP/1.1 Hello file",
                       "text/html",
-                      "<h1>HELLOOOO BIG BOY</h1>");
+                      "<h1>HELLOOOO</h1>");
 }
 
 // Handle HTTP request and send response
@@ -129,33 +143,34 @@ void handle_http_request(int fd)
 
     // TODO
     sscanf(request, "%s %s %s", req_type, req_path, req_protocol);
-
-    if (strcmp(req_path, "/") == 0) {
+    char buffer[1000];
+    
+    if (req_type == NULL || req_type == NULL || req_protocol == NULL) {
+        send_500(fd);
+    }
+    } else if (strcmp(req_path, "/") == 0) {
         send_root(fd);
         printf("Server running...\n");
    
     } else if (strcmp(req_path, "/hello") == 0){
-        send_hello(fd, "temp");
-        printf("hello\n");
+        printf("1");
+        send_hello(fd, "NONE");
+        printf("Hello\n");
    
     } else if (strcmp(req_path, "/date") == 0){
-        send_date(fd);
-        printf("date\n");     
+        send_date(fd, buffer);
+        printf("Date: %s\n", buffer);     
     
+    } else if (strncmp(req_path, "hello?", strlen("hello?")) == 0) {
+        printf("2");
+        sscanf(req_path, "/hello?%s", buffer);
+        send_hello(fd, buffer);
+        printf("Hello, %s", buffer);
+        
     } else {
         send_404(fd);
         printf("404 page not found\n");
     }
- /* 
-    printf("type");
-    puts(req_type);
-
-    printf("path");
-    puts(req_path);
-    
-    printf("proto");
-    puts(req_protocol);
-*/
 }
 
 // fatal error handler

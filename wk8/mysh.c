@@ -71,7 +71,7 @@ int main(int argc, char *argv[], char *envp[])
         } else {
         	wait(NULL);
         	freeTokens(command);
-        	freeTokens(path);
+        	
         }
 
         printf("mysh$ ");
