@@ -38,6 +38,27 @@ HistoryList CommandHistory;
 int initCommandHistory()
 {
    // TODO
+   char ch;
+   int line_no;
+
+   struct _history_list = malloc(sizeof( struct _history_list));
+
+   FILE *fp;
+   fp = fopen(HISTFILE, 'a');
+  
+   while (ch = fgetc(fp) != NULL) {
+      if (ch = '\n') {
+         line_no++;
+      }
+   }
+
+   if (line_no == 0) {
+
+   } else {
+      
+   }
+   fclose(fp);
+
 }
 
 // addToCommandHistory()

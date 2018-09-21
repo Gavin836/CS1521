@@ -1,16 +1,9 @@
-# COMP1521 18s2 Lab08 Makefile
+# Makefile for COMP1521 18s2 Week 09 Lab
 
 CC=gcc
-#CFLAGS=-std=c99 -Wall -Werror
-CFLAGS=-std=gnu99 -Wall -Werror
-#CFLAGS=-g -std=c99 -Wall -Werror -DDBUG 
-#CFLAGS=-g -std=gnu99 -Wall -Werror -DDBUG 
+CFLAGS=-Wall -Werror -std=c99
 
-mymysh : mymysh.o history.o
-
-mymysh.o : mymysh.c history.h
-
-history.o : history.c
+server : server.c
 
 clean :
-	rm -f mymysh *.o core
+	rm -f server *.o core

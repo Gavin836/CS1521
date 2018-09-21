@@ -1,6 +1,6 @@
 // mysh.c ... a small shell
 // Started by John Shepherd, September 2018
-// Completed by <<YOU>>, September/October 2018
+// Completed by <<Gavin>>, September/October 2018
 
 #include <stdlib.h>
 #include <stdio.h>
