@@ -37,6 +37,7 @@ HistoryList CommandHistory;
 
 int initCommandHistory()
 {
+	
    // TODO
    char ch;
    int line_no;
@@ -67,8 +68,26 @@ int initCommandHistory()
 
 void addToCommandHistory(char *cmdLine, int seqNo)
 {
+
    // TODO
+	FILE *fp;
+	fp = fopen("HISTFILE", 'a');
+
+	int lines = 0;
+	while(!feof(fp))
+	{
+	  ch = fgetc(fp);
+	  if(ch == '\n')
+	  {
+	    lines++;
+	  }
+	}
+
+
+
+	fclose(fp);
 }
+
 
 // showCommandHistory()
 // - display the list of 
