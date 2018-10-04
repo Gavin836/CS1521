@@ -70,21 +70,24 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 {
 
    // TODO
+   int start_read = 0;
 	FILE *fp;
 	fp = fopen("HISTFILE", 'a');
 
-	int lines = 0;
-	while(!feof(fp))
-	{
-	  ch = fgetc(fp);
-	  if(ch == '\n')
-	  {
-	    lines++;
-	  }
-	}
-
-
-
+	//int lines = 0;
+//	
+//   while(!feof(fp))
+//	{
+//	  ch = fgetc(fp);
+//	  if(ch == '\n')
+//	  {
+//	    lines++;
+//	  }
+//	}
+   char history_str[MAXSTR];
+   sprintf(history_str,"  %d  %s", seqNo, cmdLine)
+   fseek(fp,0,SEEK_END);
+   fputs(history_str,fp);
 	fclose(fp);
 }
 

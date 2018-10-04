@@ -16,8 +16,8 @@
 #include <fcntl.h>
 #include "history.h"
 
-#define TRUE 1
-#define FALSE 2
+#define TRUE 0
+#define FALSE 1
 
 // This is defined in string.h
 // BUT ONLY if you use -std=gnu99
@@ -27,6 +27,8 @@
 int execute(char **args, char **path, char **envp);
 int is_shell (char *command);
 int execute_s (char** command);
+void cd_path(char **command, char *path);
+
 
 void trim(char *);
 int strContains(char *, char *);
@@ -81,9 +83,10 @@ int main(int argc, char *argv[], char *envp[])
 
     // main loop: print prompt, read line, execute command
 
-    char line[MAXLINE];
     prompt();
-    int success;
+    char line[MAXLINE];
+    int ret;
+    char cd_buff[MAXLINE] = {0};
 
     while (fgets(line, MAXLINE, stdin) != NULL) {
         trim(line); // remove leading/trailing space
@@ -102,26 +105,32 @@ int main(int argc, char *argv[], char *envp[])
         if (strcmp(command[0], "exit") == 0){
         	break;
         
+        } else if (strcmp(command[0], "cd") == 0) {
+            cd_path(command, cd_buff);
+            //printf("New buf is %s",cd_buff);
+            ret = chdir(cd_buff);
+
+            if (ret == FALSE) {
+                printf("Directory not found");
+            }
+
         } else if (command != NULL) { 		
 	        pid = fork();
 
 	       	//Child process executes command,
 	        if ( pid == 0 ) {
+        		
+                ret = execute(command, path, envp);
+	        
 	        	
-	        	if (is_shell(command[0]) == TRUE) {
-	        		execute_s(command);	
-	        	
-	        	} else {
-	        		success = execute(command, path, envp);
-	        	}
-	        	
-	        	if (success != FALSE) {
-	        		printf("TODO add to history\n");
-	        		cmdNo++;
-	        		addToCommandHistory(line, cmdNo);
-	        	} 
 
-	        	return stat;
+            	if (ret != FALSE) {
+            		printf("TODO add to history\n");
+            		cmdNo++;
+            		//addToCommandHistory(line, cmdNo);
+        	} 
+
+        	return stat;
 	        
 	        // Parent process resets.
 	        } else {
@@ -138,10 +147,20 @@ int main(int argc, char *argv[], char *envp[])
     printf("\n");
     return(EXIT_SUCCESS);
 }
+
+void cd_path(char **command, char cd_path[MAXLINE]){
+
+    getcwd(cd_path, MAXLINE*sizeof(char));
+
+    strcat(cd_path, "/");
+    strcat(cd_path, command[1]);   
+    strcat(cd_path, "/");
+
+}
+
 int execute_s(char **command) {
-	char path[MAXLINE];
-	getcwd(path, MAXLINE);
-	//int ret;
+	char path[MAXLINE] = {0};
+	getcwd(path, sizeof(path));
 
 	if ((strcmp(command[0], "h") == 0) || 
 	    (strcmp(command[0], "history") == 0)) {
@@ -151,46 +170,7 @@ int execute_s(char **command) {
 	} else if (strcmp(command[0], "pwd") == 0){		
 		printf("%s\n", path);
 
-	} else if (strcmp(command[0], "cd") == 0){
-		
-		if (strcmp(command[1], "..") == 0) {
-			char **sep_path = tokenise(path,"/");
-			int i = 0;
-			char * s = path;
-			int len = 0;
-
-			while (s[i] != '\0') {
-				
-				if (s[i] == '/'){
-					len++;
-				}
-				i++;
-			}
-			
-			memset(path, 0, MAXLINE);
-			printf("path: %s", path);
-			for (i = 0; i < len - 1; i++) {
-				strcat(path, "/");
-				strcat(path, sep_path[i]);
-			}
-
-		} else {
-			strcat(path, "/");
-			strcat(path, command[1]);	
-		}
-
-		strcat(path, "/");
-		printf ("changing to %s\n", path);
-		chdir(path);
-
-		/*if (ret) {
-			printf("Directory not found");
-			return FALSE;
-		}
-		*/
-	} else {
-		printf("broken execute_s\n");
-	}
+	} 
 
 	return TRUE;
 }
@@ -347,8 +327,6 @@ int is_shell (char *command) {
 	} else if (strcmp(command, "cd") == 0){
 		status = TRUE;
 	}
-
-	printf("status is %d\n", status);
 
 	return status;
 }
