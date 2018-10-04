@@ -16,18 +16,27 @@
 #include <fcntl.h>
 #include "history.h"
 
-#define TRUE 0
-#define FALSE 1
-
 // This is defined in string.h
 // BUT ONLY if you use -std=gnu99
 //extern char *strdup(char *);
+
+// Global Constants
+
+#define MAXLINE 200
+#define TRUE 0
+#define FALSE 1
+
+// Global Data
+
+/* none ... unless you want some */
+
 
 // Function forward references
 int execute(char **args, char **path, char **envp);
 int is_shell (char *command);
 int execute_s (char** command);
 void cd_path(char **command, char *path);
+void prod_cmdLine(char **command, char cmdLine[MAXLINE]);
 
 
 void trim(char *);
@@ -41,13 +50,6 @@ void prompt(void);
 
 
 
-// Global Constants
-
-#define MAXLINE 200
-
-// Global Data
-
-/* none ... unless you want some */
 
 
 // Main program
@@ -79,14 +81,15 @@ int main(int argc, char *argv[], char *envp[])
     // initialise command history
     // - use content of ~/.mymysh_history file if it exists
 
-    //cmdNo = initCommandHistory();
-
+    cmdNo = initCommandHistory();
+    assert(cmdNo >= 0);
     // main loop: print prompt, read line, execute command
 
     prompt();
     char line[MAXLINE];
     int ret;
-    char cd_buff[MAXLINE] = {0};
+    char cd_buff[MAXLINE];
+    char cmdLine[MAXLINE];
 
     while (fgets(line, MAXLINE, stdin) != NULL) {
         trim(line); // remove leading/trailing space
@@ -101,6 +104,7 @@ int main(int argc, char *argv[], char *envp[])
 
 		char **command; 
         command = tokenise(line, " ");
+        prod_cmdLine(command, cmdLine);
 
         if (strcmp(command[0], "exit") == 0){
         	break;
@@ -114,6 +118,18 @@ int main(int argc, char *argv[], char *envp[])
                 printf("Directory not found");
             }
 
+        } else if ((strcmp(command[0], "h") == 0) || 
+                   (strcmp(command[0], "history") == 0)) {
+        
+            printf("HISTORY");
+    
+        } else if (strcmp(command[0], "pwd") == 0){     
+            getcwd(cd_buff, MAXLINE*sizeof(char));
+            printf("%s\n", cd_buff);
+
+            addToCommandHistory(cmdLine, cmdNo);
+            cmdNo++;
+
         } else if (command != NULL) { 		
 	        pid = fork();
 
@@ -121,13 +137,12 @@ int main(int argc, char *argv[], char *envp[])
 	        if ( pid == 0 ) {
         		
                 ret = execute(command, path, envp);
-	        
-	        	
-
-            	if (ret != FALSE) {
-            		printf("TODO add to history\n");
-            		cmdNo++;
-            		//addToCommandHistory(line, cmdNo);
+	            
+                if (ret != FALSE) {
+                    printf("TODO add to history\n");
+                    cmdNo++;
+                    //addToCommandHistory(line, cmdNo);
+            	
         	} 
 
         	return stat;
@@ -148,13 +163,28 @@ int main(int argc, char *argv[], char *envp[])
     return(EXIT_SUCCESS);
 }
 
-void cd_path(char **command, char cd_path[MAXLINE]){
+void cd_path(char **command, char cd_path[]){
 
     getcwd(cd_path, MAXLINE*sizeof(char));
 
     strcat(cd_path, "/");
     strcat(cd_path, command[1]);   
     strcat(cd_path, "/");
+
+}
+
+void prod_cmdLine(char **command, char cmdLine[MAXLINE]){
+    int i = 0;
+
+    for( i = 0; command[i] != NULL; i++){
+        if (i != 0){
+            strcat(cmdLine," ");
+            strcat(cmdLine, command[i]);
+        
+        } else {
+            strcat(cmdLine, command[i]);
+        }
+    }
 
 }
 
@@ -180,7 +210,7 @@ int execute(char **args, char **path, char **envp)
 
     char *command = 0;
     command = findExecutable(args[0], path);
-    printf("Inside execute\n");
+
     if (command == NULL) {
         printf("Command not found\n");
   

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "history.h"
 
 // This is defined in string.h
@@ -37,29 +38,65 @@ HistoryList CommandHistory;
 
 int initCommandHistory()
 {
-	
+
    // TODO
    char ch;
-   int line_no;
-
-   struct _history_list = malloc(sizeof( struct _history_list));
+   int line_no; 
 
    FILE *fp;
-   fp = fopen(HISTFILE, 'a');
+   fp = fopen(HISTFILE, "r");
   
-   while (ch = fgetc(fp) != NULL) {
-      if (ch = '\n') {
-         line_no++;
+   if (fp == NULL){
+      fp = fopen(HISTFILE, "a");
+   }   
+
+   //Count number of commands based on \n char  
+   while((ch = fgetc(fp)) != EOF)
+   {
+     if(ch == '\n')
+     {
+       line_no++;
+     }
+   }
+   
+   char line[MAXSTR];
+   int cmdNo;
+   
+   int i = 0;
+   int j = 0;
+
+   // Load into memory the required increments from HISTFILE 
+   fseek(fp, 0, SEEK_SET);
+   if (line_no > 20) {
+     
+      while(fgets(line, MAXSTR, fp)){
+         
+         if (i >= line_no - MAXHIST){
+            sscanf(line,"  %3d  %s\n", &cmdNo, line);
+            
+            CommandHistory.nEntries++;
+            CommandHistory.commands[j].seqNumber = cmdNo;
+            CommandHistory.commands[j].commandLine = line;
+            j++;
+         }
+         
+         i++;
+      }
+
+   } else if (line_no > 0){
+
+      while(fgets(line, MAXSTR, fp)){
+         sscanf(line,"  %3d  %s\n", &cmdNo, line);
+         
+         CommandHistory.nEntries++;
+         CommandHistory.commands[i].seqNumber = cmdNo;
+         CommandHistory.commands[i].commandLine = line;
+         i++;
       }
    }
 
-   if (line_no == 0) {
-
-   } else {
-      
-   }
    fclose(fp);
-
+   return CommandHistory.commands[CommandHistory.nEntries].seqNumber;
 }
 
 // addToCommandHistory()
@@ -70,22 +107,23 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 {
 
    // TODO
-   int start_read = 0;
 	FILE *fp;
-	fp = fopen("HISTFILE", 'a');
+	fp = fopen("HISTFILE", "a");
+/*
+	lines = 0;
+	
+   while(!feof(fp))
+	{
+	  ch = fgetc(fp);
+	  if(ch == '\n')
+	  {
+	    lines++;
+	  }
+	}
+*/
 
-	//int lines = 0;
-//	
-//   while(!feof(fp))
-//	{
-//	  ch = fgetc(fp);
-//	  if(ch == '\n')
-//	  {
-//	    lines++;
-//	  }
-//	}
    char history_str[MAXSTR];
-   sprintf(history_str,"  %d  %s", seqNo, cmdLine)
+   sprintf(history_str,"  %d  %s", seqNo, cmdLine);
    fseek(fp,0,SEEK_END);
    fputs(history_str,fp);
 	fclose(fp);
@@ -98,6 +136,7 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 void showCommandHistory(FILE *outf)
 {
    // TODO
+
 }
 
 // getCommandFromHistory()
@@ -107,6 +146,8 @@ void showCommandHistory(FILE *outf)
 char *getCommandFromHistory(int cmdNo)
 {
    // TODO
+
+   return 0;
 }
 
 // saveCommandHistory()
