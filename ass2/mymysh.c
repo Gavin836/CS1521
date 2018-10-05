@@ -120,8 +120,8 @@ int main(int argc, char *argv[], char *envp[])
 
         } else if ((strcmp(command[0], "h") == 0) || 
                    (strcmp(command[0], "history") == 0)) {
-        
-            printf("HISTORY");
+
+            showCommandHistory(stdout);
     
         } else if (strcmp(command[0], "pwd") == 0){     
             getcwd(cd_buff, MAXLINE*sizeof(char));

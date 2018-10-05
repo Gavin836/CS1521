@@ -65,7 +65,7 @@ int initCommandHistory()
    int i = 0;
    int j = 0;
 
-   // Load into memory the required increments from HISTFILE 
+   // Load into memory the required strings from HISTFILE 
    fseek(fp, 0, SEEK_SET);
    if (line_no > 20) {
      
@@ -106,27 +106,21 @@ int initCommandHistory()
 void addToCommandHistory(char *cmdLine, int seqNo)
 {
 
-   // TODO
-	FILE *fp;
-	fp = fopen("HISTFILE", "a");
-/*
-	lines = 0;
-	
-   while(!feof(fp))
-	{
-	  ch = fgetc(fp);
-	  if(ch == '\n')
-	  {
-	    lines++;
-	  }
-	}
-*/
+   // TODO  
+   int curr_entries = CommandHistory.nEntries;
 
-   char history_str[MAXSTR];
-   sprintf(history_str,"  %d  %s", seqNo, cmdLine);
-   fseek(fp,0,SEEK_END);
-   fputs(history_str,fp);
-	fclose(fp);
+   // Add command into the command struct. Overwrite if necessary
+   if ( curr_entries < 20 ) {
+      CommandHistory.commands[curr_entries].seqNumber = seqNo;
+      strcpy(CommandHistory.commands[curr_entries].commandLine, cmdLine); 
+   
+   } else {
+      int small_index = get_small();
+      
+      CommandHistory.commands[small_index].seqNumber = seqNo;
+      strcpy(CommandHistory.commands[small_index].commandLine, cmdLine); 
+   }
+	
 }
 
 
@@ -136,6 +130,33 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 void showCommandHistory(FILE *outf)
 {
    // TODO
+   int small_index = get_small();
+   int i = 0;
+   int no_entries = CommandHistory.nEntries;
+   
+   char line[MAXSTR];
+   int cmdNo;
+   int cmdLine;
+   
+   while (small_index < no_entries){
+      cmdNo = CommandHistory.commands[small_index].seqNumber;
+      strcpy(cmdLine,CommandHistory.commands[small_index].commandLine);
+
+      fprintf(outf,"  %d  %s\n",cmdNo,cmdLine);
+   }
+
+   if (small_index > 0){
+      
+      while (i < small_index){
+
+         cmdNo = CommandHistory.commands[i].seqNumber;
+         strcpy(cmdLine,CommandHistory.commands[small_index].commandLine);
+         
+         fprintf(outf,"  %d  %s\n",cmdNo,cmdLine);
+
+         i++;
+      }
+   }
 
 }
 
@@ -164,4 +185,23 @@ void saveCommandHistory()
 void cleanCommandHistory()
 {
    // TODO
+}
+
+int get_small(){
+   int i;
+   int no_entries = CommandHistory.nEntries;
+   int small_index = 0;
+   
+   if (no_entries > 0){ 
+      for (i = 0; i < no_entries; i++){
+         
+         if (CommandHistory.commands[i].seqNumber < 
+             CommandHistory.commands[small_index].seqNumber){
+
+            small_index = i;
+         }
+      }
+   }
+
+   return small_index;
 }
