@@ -1,0 +1,5 @@
+Makefile
+mysh
+mysh.c
+test.txt
+x
