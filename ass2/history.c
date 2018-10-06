@@ -53,50 +53,37 @@ int initCommandHistory()
    //Count number of commands based on \n char  
    while((ch = fgetc(fp)) != EOF)
    {
-     if(ch == '\n')
+     if (ch == '\n')
      {
        line_no++;
      }
    }
    
    char line[MAXSTR];
-   int cmdNo;
+   int cmdNo = 0;
+   char cmdLine[MAXSTR];
    
    int i = 0;
-   int j = 0;
-
    // Load into memory the required strings from HISTFILE 
    fseek(fp, 0, SEEK_SET);
-   if (line_no > 20) {
-     
-      while(fgets(line, MAXSTR, fp)){
-         
-         if (i >= line_no - MAXHIST){
-            sscanf(line,"  %3d  %s\n", &cmdNo, line);
-            
-            CommandHistory.nEntries++;
-            CommandHistory.commands[j].seqNumber = cmdNo;
-            CommandHistory.commands[j].commandLine = line;
-            j++;
-         }
-         
-         i++;
-      }
-
-   } else if (line_no > 0){
+   
+   if (line_no > 0){
 
       while(fgets(line, MAXSTR, fp)){
-         sscanf(line,"  %3d  %s\n", &cmdNo, line);
+         sscanf(line,"  %3d  %[^\n]\n", &cmdNo, cmdLine);
+         assert(cmdNo > 0 && strlen(line) != 0);
+         printf("cmdNo: %d, line: %s\n", cmdNo, cmdLine);
          
-         CommandHistory.nEntries++;
-         CommandHistory.commands[i].seqNumber = cmdNo;
-         CommandHistory.commands[i].commandLine = line;
+         CommandHistory.commands[i].seqNumber = i;
+         CommandHistory.commands[i].commandLine = strdup(cmdLine);
+         //printf("success == %s\n", CommandHistory.commands[i].commandLine);      
          i++;
       }
    }
+      CommandHistory.nEntries = i;
 
    fclose(fp);
-   return CommandHistory.commands[CommandHistory.nEntries].seqNumber;
+   return CommandHistory.nEntries;
 }
 
 // addToCommandHistory()
@@ -108,17 +95,20 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 
    // TODO  
    int curr_entries = CommandHistory.nEntries;
-
+   printf("enter sand");
    // Add command into the command struct. Overwrite if necessary
    if ( curr_entries < 20 ) {
+      printf("adding");
       CommandHistory.commands[curr_entries].seqNumber = seqNo;
       strcpy(CommandHistory.commands[curr_entries].commandLine, cmdLine); 
-   
+      printf("no: %d, line: %s", CommandHistory.commands[curr_entries].seqNumber, CommandHistory.commands[curr_entries].commandLine);
+
    } else {
       int small_index = get_small();
       
       CommandHistory.commands[small_index].seqNumber = seqNo;
       strcpy(CommandHistory.commands[small_index].commandLine, cmdLine); 
+      printf("no: %d, line: %s", CommandHistory.commands[small_index].seqNumber, CommandHistory.commands[small_index].commandLine);
    }
 	
 }
@@ -131,13 +121,14 @@ void showCommandHistory(FILE *outf)
 {
    // TODO
    int small_index = get_small();
-   int i = 0;
+   //int i = 0;
    int no_entries = CommandHistory.nEntries;
    
-   char line[MAXSTR];
-   int cmdNo;
-   int cmdLine;
-   
+   //int cmdNo;
+   //char cmdLine[MAXSTR];
+
+   printf("no_entries: %d and in: %d", no_entries,small_index);
+   /*
    while (small_index < no_entries){
       cmdNo = CommandHistory.commands[small_index].seqNumber;
       strcpy(cmdLine,CommandHistory.commands[small_index].commandLine);
@@ -157,6 +148,7 @@ void showCommandHistory(FILE *outf)
          i++;
       }
    }
+   */
 
 }
 

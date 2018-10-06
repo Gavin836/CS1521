@@ -33,8 +33,6 @@
 
 // Function forward references
 int execute(char **args, char **path, char **envp);
-int is_shell (char *command);
-int execute_s (char** command);
 void cd_path(char **command, char *path);
 void prod_cmdLine(char **command, char cmdLine[MAXLINE]);
 
@@ -49,9 +47,6 @@ int isExecutable(char *);
 void prompt(void);
 
 
-
-
-
 // Main program
 // Set up enviroment and then run main loop
 // - read command, execute command, repeat
@@ -61,7 +56,7 @@ int main(int argc, char *argv[], char *envp[])
     pid_t pid;    // pid of child process
     int stat = 0;     // return status of child
     char **path; // array of directory names
-    int cmdNo = 0;    // command number
+    int cmdNo;    // command number
     int i;         // generic index
 
     // set up command PATH from environment variable
@@ -113,15 +108,24 @@ int main(int argc, char *argv[], char *envp[])
             cd_path(command, cd_buff);
             //printf("New buf is %s",cd_buff);
             ret = chdir(cd_buff);
-
-            if (ret == FALSE) {
+            
+            printf("ret is %d", ret);
+            if (ret != FALSE) {
+                printf("add");
+                addToCommandHistory(line, cmdNo);
+                cmdNo++;
+            }
+             else {
                 printf("Directory not found");
             }
-
+            
         } else if ((strcmp(command[0], "h") == 0) || 
                    (strcmp(command[0], "history") == 0)) {
 
+            printf("Dune");
             showCommandHistory(stdout);
+            addToCommandHistory(line, cmdNo);
+            cmdNo++;
     
         } else if (strcmp(command[0], "pwd") == 0){     
             getcwd(cd_buff, MAXLINE*sizeof(char));
@@ -139,9 +143,8 @@ int main(int argc, char *argv[], char *envp[])
                 ret = execute(command, path, envp);
 	            
                 if (ret != FALSE) {
-                    printf("TODO add to history\n");
-                    cmdNo++;
-                    //addToCommandHistory(line, cmdNo);
+                    addToCommandHistory(line, cmdNo);
+                    cmdNo++;                  
             	
         	} 
 
@@ -186,23 +189,6 @@ void prod_cmdLine(char **command, char cmdLine[MAXLINE]){
         }
     }
 
-}
-
-int execute_s(char **command) {
-	char path[MAXLINE] = {0};
-	getcwd(path, sizeof(path));
-
-	if ((strcmp(command[0], "h") == 0) || 
-	    (strcmp(command[0], "history") == 0)) {
-		
-		printf("HISTORY");
-	
-	} else if (strcmp(command[0], "pwd") == 0){		
-		printf("%s\n", path);
-
-	} 
-
-	return TRUE;
 }
 
 int execute(char **args, char **path, char **envp)
@@ -339,27 +325,6 @@ int strContains(char *str, char *chars)
     return 0;
 }
 
-int is_shell (char *command) {
-	int status = FALSE;
-
-	if (strcmp(command, "exit") == 0) {
-		status = TRUE;
-	
-	} else if (strcmp(command, "h") == 0){
-		status = TRUE;
-	
-	} else if (strcmp(command, "history") == 0){
-		status = TRUE;
-	
-	} else if (strcmp(command, "pwd") == 0){
-		status = TRUE;
-	
-	} else if (strcmp(command, "cd") == 0){
-		status = TRUE;
-	}
-
-	return status;
-}
 // prompt: print a shell prompt
 // done as a function to allow switching to $PS1
 void prompt(void)
