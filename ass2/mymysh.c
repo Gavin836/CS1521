@@ -35,6 +35,8 @@
 int execute(char **args, char **path, char **envp);
 void cd_path(char **command, char *path);
 void prod_cmdLine(char **command, char cmdLine[MAXLINE]);
+void p_brace();
+
 
 
 void trim(char *);
@@ -54,7 +56,7 @@ void prompt(void);
 int main(int argc, char *argv[], char *envp[])
 {
     pid_t pid;    // pid of child process
-    int stat = 0;     // return status of child
+    int child_stat;     // return status of child
     char **path; // array of directory names
     int cmdNo;    // command number
     int i;         // generic index
@@ -77,16 +79,20 @@ int main(int argc, char *argv[], char *envp[])
     // - use content of ~/.mymysh_history file if it exists
 
     cmdNo = initCommandHistory();
+
     assert(cmdNo >= 0);
     // main loop: print prompt, read line, execute command
 
     prompt();
     char line[MAXLINE];
-    int ret;
     char cd_buff[MAXLINE];
     char cmdLine[MAXLINE];
-
+    
+    int ret;
+    int skip = FALSE;
     while (fgets(line, MAXLINE, stdin) != NULL) {
+       // Deal with empty strings.
+
         trim(line); // remove leading/trailing space
 
         // TODO
@@ -97,75 +103,120 @@ int main(int argc, char *argv[], char *envp[])
         // - and many other functions
         // TODO
 
-		char **command; 
+	    char **command; 
         command = tokenise(line, " ");
-        prod_cmdLine(command, cmdLine);
-
-        if (strcmp(command[0], "exit") == 0){
-        	break;
         
-        } else if (strcmp(command[0], "cd") == 0) {
-            cd_path(command, cd_buff);
-            //printf("New buf is %s",cd_buff);
-            ret = chdir(cd_buff);
+        //Deal with sequence commands
+        if (command[0][0] == '!' && skip == FALSE) {
+            int use_no;
+            char *use_line;
             
-            printf("ret is %d", ret);
-            if (ret != FALSE) {
-                printf("add");
-                addToCommandHistory(line, cmdNo);
-                cmdNo++;
-            }
-             else {
-                printf("Directory not found");
-            }
+            if (strcmp(command[0], "!!") == 0) {
+                use_no = cmdNo;
+                use_no--;
             
-        } else if ((strcmp(command[0], "h") == 0) || 
-                   (strcmp(command[0], "history") == 0)) {
-
-            printf("Dune");
-            showCommandHistory(stdout);
-            addToCommandHistory(line, cmdNo);
-            cmdNo++;
-    
-        } else if (strcmp(command[0], "pwd") == 0){     
-            getcwd(cd_buff, MAXLINE*sizeof(char));
-            printf("%s\n", cd_buff);
-
-            addToCommandHistory(cmdLine, cmdNo);
-            cmdNo++;
-
-        } else if (command != NULL) { 		
-	        pid = fork();
-
-	       	//Child process executes command,
-	        if ( pid == 0 ) {
-        		
-                ret = execute(command, path, envp);
-	            
+            } else {
+                sscanf(command[0], "!%d", &use_no);
+                use_no--;
+            }            
+           
+            use_line = getCommandFromHistory(use_no);          
+            
+            if (use_line == NULL) {
+                skip = TRUE;
+            
+            } else {
+                freeTokens(command);
+                command = tokenise(use_line, " ");
+            }
+        }
+        
+        //convert **char into a string
+        prod_cmdLine(command, cmdLine);
+        
+        // Wildcard expansions        
+        command = fileNameExpand(command);
+        
+        // Determine which command to run.
+        if (skip == FALSE) {
+        
+            if (strcmp(command[0], "exit") == 0){
+            	break;
+            
+            } else if (strcmp(command[0], "cd") == 0) {
+                p_brace();
+                cd_path(command, cd_buff);
+                //printf("New buf is %s",cd_buff);
+                ret = chdir(cd_buff);
+                
                 if (ret != FALSE) {
-                    addToCommandHistory(line, cmdNo);
-                    cmdNo++;                  
+                    printf("add %d with line %s\n", cmdNo, line);
+                    addToCommandHistory(cmdLine, cmdNo);
+                    cmdNo++;
+                }
+                 else {
+                    printf("Directory not found");
+
+                }
+                p_brace();
+                
+                
+            } else if ((strcmp(command[0], "h") == 0) || 
+                       (strcmp(command[0], "history") == 0)) {
+                
+                p_brace();        
+                showCommandHistory(stdout);
+                addToCommandHistory(cmdLine, cmdNo);
+                
+                cmdNo++;
+                p_brace();
+        
+            } else if (strcmp(command[0], "pwd") == 0){     
+                
+                p_brace();
+                getcwd(cd_buff, MAXLINE*sizeof(char));
+                printf("%s\n", cd_buff);
+
+                addToCommandHistory(cmdLine, cmdNo);
+                cmdNo++;
+                p_brace();
+            
+            } else if (command != NULL) { 		
+                pid = fork();
+
+               	//Child process executes command,
+               	child_stat = TRUE;
+                
+                if ( pid == 0 ) {
+                    execute(command, path, envp);
+                    child_stat = FALSE;   	       	    
             	
-        	} 
-
-        	return stat;
-	        
-	        // Parent process resets.
-	        } else {
-	        	wait(NULL);
-	        	freeTokens(command);
-	        	
-	        }	
-	    }
-
-        prompt();
+            	// Parent process resets.
+            	} else {
+                	wait(NULL);
+                	p_brace();
+                	
+                	if (child_stat == TRUE) {
+                        addToCommandHistory(cmdLine, cmdNo);
+                        cmdNo++; 	
+                    } 
+                    
+                	freeTokens(command);	        	
+                } 		        
+            }
+        }
+        skip = FALSE;
+	    prompt();
     }
-    //saveCommandHistory();
+
+    saveCommandHistory();
     //cleanCommandHistory();
     printf("\n");
+    
     return(EXIT_SUCCESS);
 }
 
+// Function constructs the absolute path of the required file
 void cd_path(char **command, char cd_path[]){
 
     getcwd(cd_path, MAXLINE*sizeof(char));
@@ -176,10 +227,14 @@ void cd_path(char **command, char cd_path[]){
 
 }
 
+//Function contructs the full command as a string.
 void prod_cmdLine(char **command, char cmdLine[MAXLINE]){
     int i = 0;
-
+    //cmdLine = 0;
+    memset(cmdLine, 0, MAXLINE * sizeof(char));
+    
     for( i = 0; command[i] != NULL; i++){
+        //printf("at %d: %s\n", i,command[i]);
         if (i != 0){
             strcat(cmdLine," ");
             strcat(cmdLine, command[i]);
@@ -202,6 +257,7 @@ int execute(char **args, char **path, char **envp)
   
     } else {
     	printf("Running %s ...\n", command);
+        p_brace();
         execve(command, args, envp);
         
         perror("Exec failed\n");
@@ -214,8 +270,37 @@ int execute(char **args, char **path, char **envp)
 // - returns a possibly larger set of tokens
 char **fileNameExpand(char **tokens)
 {
-    // TODO
-    return 0;
+    int i = 0;
+    int j = 0;
+    int ret;    
+    char str[MAXLINE] = {0};
+    char **expanded;
+    glob_t globbuf;
+    
+    
+    //Expand the commands appropriately
+    while (tokens[i] != NULL) {
+        ret = glob( tokens[i], GLOB_NOCHECK|GLOB_TILDE, NULL,  &globbuf);
+        
+        if (ret == 0) {
+            while (j < globbuf.gl_pathc) {
+                strcat(str, " ");
+                strcat(str, globbuf.gl_pathv[j]);
+                j++;
+            }
+                  
+        } else {
+            strcat(str, " ");
+            strcat(str, tokens[i]);
+        }
+        
+        j = 0;       
+        i++;
+    }
+    //printf("STRING: %s\n", str);
+    globfree(&globbuf);
+    expanded = tokenise(str, " ");
+    return expanded;
 }
 
 // findExecutable: look for executable in PATH
@@ -331,3 +416,10 @@ void prompt(void)
 {
     printf("mymysh$ ");
 }
+
+void p_brace (void)
+{
+    printf("------------------------------\n");
+}
+
+
