@@ -189,11 +189,11 @@ int main(int argc, char *argv[], char *envp[])
                     //Redirect input
                     if (strContains(cmdLine, "<")) {
                         temp = tokenise(line,"<");
-                        printf("1: %s, 2: %s\n", temp[0], temp[1]);
                         
                         input = strdup(temp[1]);
                         output = strdup(temp[2]);
                         
+                        printf("1: %s, 2: %s\n", input, output);
                         fp = popen(input, "r");
                         char ch;
                         while((ch = fgetc(fp)) != EOF) {
@@ -237,7 +237,7 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     saveCommandHistory();
-    //cleanCommandHistory();
+    cleanCommandHistory();
     printf("\n");
     
     return(EXIT_SUCCESS);
