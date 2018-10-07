@@ -71,12 +71,12 @@ int initCommandHistory()
 
         while(fgets(line, MAXSTR, fp)){
             sscanf(line,"  %3d  %[^\n]\n", &cmdNo, cmdLine);
-            assert(cmdNo > 0 && strlen(line) != 0);
+            assert(cmdNo >= 0 && strlen(line) != 0);
             printf("cmdNo: %d, line: %s\n", cmdNo, cmdLine);
             
             CommandHistory.commands[i].seqNumber = i;
             CommandHistory.commands[i].commandLine = strdup(cmdLine);
-            //printf("success == %s\n", CommandHistory.commands[i].commandLine);        
+            //printf("success == %d\n", CommandHistory.commands[i].seqNumber);        
             i++;
         }
     }
@@ -105,6 +105,7 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 
     }  else {
         int small_index = get_small();
+        //printf("free %s new seq: %d\n", CommandHistory.commands[small_index].commandLine, seqNo);
         free(CommandHistory.commands[small_index].commandLine);
         
         CommandHistory.commands[small_index].seqNumber = seqNo;
@@ -112,6 +113,7 @@ void addToCommandHistory(char *cmdLine, int seqNo)
     }
     
     CommandHistory.nEntries++;
+    
 }
 
 
@@ -124,24 +126,20 @@ void showCommandHistory(FILE *outf)
     int small_index = get_small();
     int no_entries = CommandHistory.nEntries;
     int i = 0;
-    
-    //printf("no_entries: %d and small_index: %d", no_entries, small_index);
+    printf("no_entries: %d and SMOL: %d\n", no_entries, small_index);
     
     while (small_index < no_entries){
-
-        fprintf(outf,"  %d  %s\n",CommandHistory.commands[small_index].seqNumber + 1,
+        
+        fprintf(outf,"  %d  %s\n", CommandHistory.commands[small_index].seqNumber + 1,
                                   CommandHistory.commands[small_index].commandLine);
         small_index++;
     }
      
-    if (get_small() > 0){ 
-        if (CommandHistory.nEntries > 20) {
-            i = CommandHistory.nEntries - 20;
-        }
+    if (get_small()  > 0){ 
         
         while (i < small_index){
 
-             fprintf(outf,"  %d  %s\n",CommandHistory.commands[i].seqNumber + 1,
+             fprintf(outf,"  %d  %s\n", CommandHistory.commands[i].seqNumber + 1,
                                        CommandHistory.commands[i].commandLine);
             i++;
         }
@@ -156,6 +154,9 @@ char *getCommandFromHistory(int cmdNo)
 {
     // TODO
     int i = 0;
+    
+    //adjusted for index
+    cmdNo--;
     
     while (i < MAXHIST && CommandHistory.commands[i].seqNumber != cmdNo) {
         i++;
@@ -183,19 +184,18 @@ void saveCommandHistory()
     
     while (small_index < CommandHistory.nEntries){
 
-        fprintf(fp, "  %d  %s\n", CommandHistory.commands[small_index].seqNumber + 1,     
-                                CommandHistory.commands[small_index].commandLine);
-        
+        fprintf(fp, "  %d  %s\n", CommandHistory.commands[small_index].seqNumber,     
+                                  CommandHistory.commands[small_index].commandLine);
+
         free(CommandHistory.commands[small_index].commandLine);
         small_index++;
     }
      
     if (get_small() > 0){     
-        while (i < small_index){
-             
-            fprintf(fp, "  %d  %s", CommandHistory.commands[i].seqNumber + 1,     
-                                    CommandHistory.commands[i].commandLine);
-            
+        while (i < small_index){            
+            fprintf(fp, "seq  %d  cmd%s\n", CommandHistory.commands[i].seqNumber,     
+                                      CommandHistory.commands[i].commandLine);
+        
             free(CommandHistory.commands[i].commandLine);
             i++;
         }
@@ -208,21 +208,21 @@ void saveCommandHistory()
 void cleanCommandHistory()
 {
     // TODO
+    // Done throughout
 }
 
+//Find the index corresponding to the smallest command number
 int get_small(){
     int i;
     int no_entries = CommandHistory.nEntries;
     int small_index = 0;
     
-    if (no_entries > 0){ 
-        for (i = 0; i < no_entries; i++){
+    for (i = 0; i < no_entries; i++){
+        printf("Small~ no: %d / %d\n", CommandHistory.commands[i].seqNumber, CommandHistory.commands[small_index].seqNumber);
+        if (CommandHistory.commands[i].seqNumber < 
+            CommandHistory.commands[small_index].seqNumber){
             
-            if (CommandHistory.commands[i].seqNumber < 
-                 CommandHistory.commands[small_index].seqNumber){
-
-                small_index = i;
-            }
+            small_index = i;
         }
     }
 

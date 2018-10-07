@@ -90,6 +90,11 @@ int main(int argc, char *argv[], char *envp[])
     
     int ret;
     int skip = FALSE;
+    
+    char *input;
+    char *output;
+    char **temp;
+    FILE *fp;
     while (fgets(line, MAXLINE, stdin) != NULL) {
        // Deal with empty strings.
 
@@ -113,11 +118,9 @@ int main(int argc, char *argv[], char *envp[])
             
             if (strcmp(command[0], "!!") == 0) {
                 use_no = cmdNo;
-                use_no--;
-            
+                         
             } else {
                 sscanf(command[0], "!%d", &use_no);
-                use_no--;
             }            
            
             use_line = getCommandFromHistory(use_no);          
@@ -144,13 +147,12 @@ int main(int argc, char *argv[], char *envp[])
             	break;
             
             } else if (strcmp(command[0], "cd") == 0) {
-                p_brace();
                 cd_path(command, cd_buff);
                 //printf("New buf is %s",cd_buff);
                 ret = chdir(cd_buff);
                 
                 if (ret != FALSE) {
-                    printf("add %d with line %s\n", cmdNo, line);
+                    //printf("add %d with line %s\n", cmdNo, line);
                     addToCommandHistory(cmdLine, cmdNo);
                     cmdNo++;
                 }
@@ -158,7 +160,6 @@ int main(int argc, char *argv[], char *envp[])
                     printf("Directory not found");
 
                 }
-                p_brace();
                 
                 
             } else if ((strcmp(command[0], "h") == 0) || 
@@ -172,14 +173,11 @@ int main(int argc, char *argv[], char *envp[])
                 p_brace();
         
             } else if (strcmp(command[0], "pwd") == 0){     
-                
-                p_brace();
                 getcwd(cd_buff, MAXLINE*sizeof(char));
                 printf("%s\n", cd_buff);
 
                 addToCommandHistory(cmdLine, cmdNo);
                 cmdNo++;
-                p_brace();
             
             } else if (command != NULL) { 		
                 pid = fork();
@@ -188,8 +186,37 @@ int main(int argc, char *argv[], char *envp[])
                	child_stat = TRUE;
                 
                 if ( pid == 0 ) {
-                    execute(command, path, envp);
-                    child_stat = FALSE;   	       	    
+                    //Redirect input
+                    if (strContains(cmdLine, "<")) {
+                        temp = tokenise(line,"<");
+                        printf("1: %s, 2: %s\n", temp[0], temp[1]);
+                        
+                        input = strdup(temp[1]);
+                        output = strdup(temp[2]);
+                        
+                        fp = popen(input, "r");
+                        char ch;
+                        while((ch = fgetc(fp)) != EOF) {
+                            fputc(ch,stdout);
+                        }
+                        
+                        printf("%s, %s", input, output);
+                        pclose(fp);
+                        free(input);
+                        free(output);
+                        freeTokens(temp);
+                        
+                    
+                    //Redirect output
+                    } else if (strContains(cmdLine, ">")) {
+                    
+                    
+                    //Normal executions
+                    } else {
+                        execute(command, path, envp);
+                        // Value set if execute fails
+                        child_stat = FALSE;   	
+                    }       	    
             	
             	// Parent process resets.
             	} else {
