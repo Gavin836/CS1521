@@ -91,26 +91,24 @@ int main(int argc, char *argv[], char *envp[])
     int ret;
     int skip = FALSE;
     
-    char *input;
-    char *output;
+    char *redir_input;
+    char *redir_command;
     char **temp;
     FILE *fp;
     while (fgets(line, MAXLINE, stdin) != NULL) {
        // Deal with empty strings.
 
         trim(line); // remove leading/trailing space
+        char **command; 
 
-        // TODO
-        // Code to implement mainloop goes here
-        // Uses
-        // - addToCommandHistory()
-        // - showCommandHistory()
-        // - and many other functions
-        // TODO
+        //Skip the loop if command is empty
+        if (strcmp(line, "") == 0){
+            skip = TRUE;
 
-	    char **command; 
-        command = tokenise(line, " ");
-        
+        } else {
+            command = tokenise(line, " ");
+        }
+
         //Deal with sequence commands
         if (command[0][0] == '!' && skip == FALSE) {
             int use_no;
@@ -165,6 +163,7 @@ int main(int argc, char *argv[], char *envp[])
             } else if ((strcmp(command[0], "h") == 0) || 
                        (strcmp(command[0], "history") == 0)) {
                 
+                //Print a line of "---------"
                 p_brace();        
                 showCommandHistory(stdout);
                 addToCommandHistory(cmdLine, cmdNo);
@@ -189,21 +188,24 @@ int main(int argc, char *argv[], char *envp[])
                     //Redirect input
                     if (strContains(cmdLine, "<")) {
                         temp = tokenise(line,"<");
+                        redir_command = strdup(temp[0]);
+                        redir_input = strdup(temp[1]);
                         
-                        input = strdup(temp[1]);
-                        output = strdup(temp[2]);
+                        // Open input command and write to it
+                        //printf("redir %s < %s ", redir_command, redir_input);
                         
-                        printf("1: %s, 2: %s\n", input, output);
-                        fp = popen(input, "r");
-                        char ch;
-                        while((ch = fgetc(fp)) != EOF) {
-                            fputc(ch,stdout);
+                        fp = popen(redir_command, "w");
+                        assert(fp != NULL);
+                        //if (fp == -1) {
+                          //  printf("%s is not a valid command", redir_command);
+                        //}
+
+                        while(fputs(redir_input, fp) != EOF) {                
                         }
                         
-                        printf("%s, %s", input, output);
                         pclose(fp);
-                        free(input);
-                        free(output);
+                        free(redir_input);
+                        free(redir_command);
                         freeTokens(temp);
                         
                     
@@ -309,6 +311,7 @@ char **fileNameExpand(char **tokens)
     while (tokens[i] != NULL) {
         ret = glob( tokens[i], GLOB_NOCHECK|GLOB_TILDE, NULL,  &globbuf);
         
+        //Append the extensions onto a buffer
         if (ret == 0) {
             while (j < globbuf.gl_pathc) {
                 strcat(str, " ");

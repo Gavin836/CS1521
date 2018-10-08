@@ -38,11 +38,10 @@ HistoryList CommandHistory;
 
 int initCommandHistory()
 {
-
-    // TODO
     char ch;
     int line_no = 0; 
 
+    //Open file. Create if necessary
     FILE *fp;
     fp = fopen(HISTFILE, "r");
   
@@ -68,11 +67,11 @@ int initCommandHistory()
     fseek(fp, 0, SEEK_SET);
     
     if (line_no > 0){
-
+        //Extract command number and line
         while(fgets(line, MAXSTR, fp)){
             sscanf(line,"  %d  %[^\n]\n", &cmdNo, cmdLine);
             assert(cmdNo >= 0 && strlen(line) != 0);
-            printf("cmdNo: %d, line: %s\n", cmdNo, cmdLine);
+            //printf("cmdNo: %d, line: %s\n", cmdNo, cmdLine);
             
             CommandHistory.commands[i].seqNumber = i;
             CommandHistory.commands[i].commandLine = strdup(cmdLine);
@@ -96,16 +95,16 @@ int initCommandHistory()
 void addToCommandHistory(char *cmdLine, int seqNo)
 {
  
-    // TODO  
     int curr_entries = CommandHistory.nEntries;
 
     // Add command into the command struct. Overwrite our records necessary
-    if ( curr_entries < 20 ) {
+    if ( CommandHistory.commands[curr_entries].seqNumber < 20 ) {
         
         CommandHistory.commands[curr_entries].seqNumber = seqNo;
         CommandHistory.commands[curr_entries].commandLine =  strdup(cmdLine); 
         //printf("no: %d, line: %s", CommandHistory.commands[curr_entries].seqNumber, CommandHistory.commands[curr_entries].commandLine);
 
+    //Overite based on oldest command
     }  else {
         int small_index = get_small();
         //printf("free %s new seq: %d\n", CommandHistory.commands[small_index].commandLine, seqNo);
@@ -115,7 +114,7 @@ void addToCommandHistory(char *cmdLine, int seqNo)
         CommandHistory.commands[small_index].commandLine =  strdup(cmdLine);
     }
     
-    if (CommandHistory.nEntries < 20){
+    if (CommandHistory.nEntries < MAXHIST){
         CommandHistory.nEntries++;
     }
     
@@ -127,13 +126,13 @@ void addToCommandHistory(char *cmdLine, int seqNo)
 
 void showCommandHistory(FILE *outf)
 {
-    // TODO
     int small_index = get_small();
     int no_entries = CommandHistory.nEntries;
     int i = 0;
     
     //printf("index %d, entries %d\n", small_index, no_entries);
     
+    //Print out the oldest entries first. If needed, follow with new entries.
     i = small_index;
     while (i  < no_entries){
         fprintf(outf,"  %d  %s\n", CommandHistory.commands[i].seqNumber + 1,
@@ -159,10 +158,9 @@ void showCommandHistory(FILE *outf)
 
 char *getCommandFromHistory(int cmdNo)
 {
-    // TODO
     int i = 0;
     
-    //adjusted for index
+    //adjusted for index (CmdNo is 1 greater than SeqNo)
     cmdNo--;
     
     while (i < MAXHIST && CommandHistory.commands[i].seqNumber != cmdNo) {
@@ -189,6 +187,7 @@ void saveCommandHistory()
     int small_index = get_small();
     int i = 0;
     
+    //Save memory to file. Free memory as it is saved
     while (small_index < CommandHistory.nEntries){
 
         fprintf(fp, "  %d  %s\n", CommandHistory.commands[small_index].seqNumber,     
